@@ -1,0 +1,19 @@
+{
+    "name": "drdelay/pokemon-go",
+    "description": "Pokemon Go Library",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "DrDelay",
+            "email": "info@vi0lation.de"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "psr/log": "^1.0"
+    },
+    "autoload": {
+        "psr-4": { "DrDelay\\PokemonGo\\": "src/" }
+    }
+}
