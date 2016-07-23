@@ -20,9 +20,9 @@ $client->login();
 // More to come
 ```
 
-Google login
-------------
-If you login with Google you should catch `\DrDelay\PokemonGo\Auth\DeviceNotVerifiedException` at the login call. It gets raised if a verification on the google website is needed.
+Google OAuth login
+------------------
+If you login with GoogleOAuth you should catch `\DrDelay\PokemonGo\Auth\DeviceNotVerifiedException` at the login call. It gets raised if a verification on the google website is needed.
 
 See the message, and the `getVerificationUrl` / `getUserCode` methods
 

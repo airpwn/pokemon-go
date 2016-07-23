@@ -22,7 +22,7 @@ use Fig\Cache\Memory\MemoryPool;
 use GuzzleHttp\Exception\RequestException;
 use function GuzzleHttp\json_decode;
 
-class GoogleAuth extends AbstractAuth implements CacheAwareInterface
+class GoogleOAuth extends AbstractAuth implements CacheAwareInterface
 {
     use CacheAwareTrait;
 
@@ -46,9 +46,9 @@ class GoogleAuth extends AbstractAuth implements CacheAwareInterface
      *
      * @param string $identifier Can be your E-Mail, doesn't have to be
      *
-     * @return GoogleAuth|$this
+     * @return GoogleOAuth|$this
      */
-    public function setIdentifier(string $identifier):GoogleAuth
+    public function setIdentifier(string $identifier):GoogleOAuth
     {
         $this->identifier = $identifier;
 
