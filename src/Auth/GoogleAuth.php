@@ -11,8 +11,8 @@
 /**
  * @author Barry vd. Heuvel <barryvdh@gmail.com>
  *
- * Based on the implementation from https://github.com/mgansler/GPSOAuthPHP
- * Client signature + android id from https://github.com/ctrlaltdylan/pgo-php
+ * Based on the implementation from https://github.com/simon-weber/gpsoauth
+ * Client signature + android id from https://github.com/tejado/pgoapi
  */
 
 namespace DrDelay\PokemonGo\Auth;
@@ -22,11 +22,10 @@ use DrDelay\PokemonGo\Enum\AuthType;
 class GoogleAuth extends AbstractAuth
 {
     const GOOGLE_AUTH_URL = 'https://android.clients.google.com/auth';
-    const GOOGLE_SERVICE = 'ac2dm';
-    const GOOGLE_APP = 'com.nianticlabs.pokemongo';
-    const GOOGLE_CLIENT_SIG = '321187995bc7cdc2b5fc91b11a96e2baa8602c62';
-    const GOOGLE_ANDROID_ID = '9774d56d682e549c';
-    const OPERATOR_COUNTRY = 'us';
+    const GOOGLE_LOGIN_ANDROID_ID = '9774d56d682e549c';
+    const GOOGLE_LOGIN_SERVICE= 'audience:server:client_id:848232511240-7so421jotr2609rmqakceuu1luuq0ptb.apps.googleusercontent.com';
+    const GOOGLE_LOGIN_APP = 'com.nianticlabs.pokemongo';
+    const GOOGLE_LOGIN_CLIENT_SIG = '321187995bc7cdc2b5fc91b11a96e2baa8602c62';
     const SDK_VERSION = 17;
 
     /** @var string|null */
@@ -82,11 +81,11 @@ class GoogleAuth extends AbstractAuth
             'has_permission' => 1,
             'add_account' => 1,
             'Passwd' => $this->password,
-            'service' => static::GOOGLE_SERVICE,
+            'service' => 'ac2dm',
             'source' => 'android',
-            'androidId' => static::GOOGLE_ANDROID_ID,
+            'androidId' => static::GOOGLE_LOGIN_ANDROID_ID,
             'device_country' => $this->deviceCountry,
-            'operatorCountry' => static::OPERATOR_COUNTRY,
+            'operatorCountry' => $this->deviceCountry,
             'lang' => 'en',
             'sdk_version' => static::SDK_VERSION,
         ];
@@ -111,11 +110,13 @@ class GoogleAuth extends AbstractAuth
             'Email' => $this->email,
             'has_permission' => 1,
             'EncryptedPasswd' => $token,
-            'service' => static::GOOGLE_SERVICE,
+            'service' => static::GOOGLE_LOGIN_SERVICE,
             'source' => 'android',
-            'androidId' => static::GOOGLE_ANDROID_ID,
+            'androidId' => static::GOOGLE_LOGIN_ANDROID_ID,
+            'app' => static::GOOGLE_LOGIN_APP,
+            'client_sig' => static::GOOGLE_LOGIN_CLIENT_SIG,
             'device_country' => $this->deviceCountry,
-            'operatorCountry' => static::OPERATOR_COUNTRY,
+            'operatorCountry' => $this->deviceCountry,
             'lang' => 'en',
             'sdk_version' => static::SDK_VERSION,
         ];
@@ -130,9 +131,7 @@ class GoogleAuth extends AbstractAuth
             throw new AuthException('No Access Token returned from Google');
         }
 
-        $expiry = isset($result['Expiry']) ? (int)$result['Expiry'] : strtotime('+30 minutes');
-
-        return new AccessToken($result['Auth'], $expiry);
+        return new AccessToken($result['Auth'], strtotime('+30 minutes'));
     }
 
 }
