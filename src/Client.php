@@ -29,6 +29,8 @@ use Psr\Log\NullLogger;
 
 class Client implements LoggerAwareInterface
 {
+    const USER_AGENT = 'Niantic App';
+
     /** @var Container */
     protected $container;
 
@@ -44,7 +46,7 @@ class Client implements LoggerAwareInterface
 
         $this->container->share(GuzzleClient::class, GuzzleClient::class)->withArgument(new RawArgument([
             'headers' => [
-                'User-Agent' => Resources::USER_AGENT,
+                'User-Agent' => static::USER_AGENT,
                 'Connection' => 'keep-alive',
                 'Accept' => '*/*',
                 'Content-Type' => 'application/x-www-form-urlencoded',

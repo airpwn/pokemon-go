@@ -15,11 +15,16 @@
 namespace DrDelay\PokemonGo\Auth;
 
 use DrDelay\PokemonGo\Enum\AuthType;
-use DrDelay\PokemonGo\Resources;
 use function GuzzleHttp\json_decode;
 
 class PtcAuth extends AbstractAuth
 {
+    const PTC_LOGIN_URL = 'https://sso.pokemon.com/sso/login?service=https%3A%2F%2Fsso.pokemon.com%2Fsso%2Foauth2.0%2FcallbackAuthorize';
+    const PTC_OAUTH_URL = 'https://sso.pokemon.com/sso/oauth2.0/accessToken';
+    const PTC_OAUTH_CLIENT_ID = 'mobile-app_pokemon-go';
+    const PTC_OAUTH_REDIRECT = 'https://www.nianticlabs.com/pokemongo/error';
+    const PTC_OAUTH_CLIENT_SECRET = 'w8ScCUXJQc6kXKw8FiOhd8Fixzht18Dq3PEVkUCP5ZPxtgyWsbTvWHFLm2wNY0JR';
+
     /** @var string|null */
     protected $username;
 
@@ -54,9 +59,9 @@ class PtcAuth extends AbstractAuth
 
     public function invoke(): AccessToken
     {
-        $session = json_decode($this->client->get(Resources::PTC_LOGIN_URL)->getBody());
+        $session = json_decode($this->client->get(static::PTC_LOGIN_URL)->getBody());
 
-        $login = $this->client->post(Resources::PTC_LOGIN_URL, [
+        $login = $this->client->post(static::PTC_LOGIN_URL, [
             'form_params' => [
                 'lt' => $session->lt,
                 'execution' => $session->execution,
@@ -76,11 +81,11 @@ class PtcAuth extends AbstractAuth
         $ticket = $queryParts['ticket'];
         $this->logger->info('Got ticket '.$ticket);
 
-        $token = $this->client->post(Resources::PTC_OAUTH_URL, [
+        $token = $this->client->post(static::PTC_OAUTH_URL, [
             'form_params' => [
-                'client_id' => Resources::PTC_OAUTH_CLIENT_ID,
-                'redirect_uri' => Resources::PTC_OAUTH_REDIRECT,
-                'client_secret' => Resources::PTC_OAUTH_CLIENT_SECRET,
+                'client_id' => static::PTC_OAUTH_CLIENT_ID,
+                'redirect_uri' => static::PTC_OAUTH_REDIRECT,
+                'client_secret' => static::PTC_OAUTH_CLIENT_SECRET,
                 'grant_type' => 'refresh_token',
                 'code' => $ticket,
             ],
