@@ -4,7 +4,7 @@ It is still work in progress.
 
 Install / Use
 -------------
-~~`composer require drdelay/pokemon-go`~~
+`composer require drdelay/pokemon-go`
 ```
 $auth = (new \DrDelay\PokemonGo\Auth\PtcAuth())
     ->setCredentials('PTCUser', 'PTCPass');
