@@ -8,6 +8,7 @@ Install / Use
 ```
 $auth = (new \DrDelay\PokemonGo\Auth\PtcAuth())
     ->setCredentials('PTCUser', 'PTCPass');
+// Check the folder ./src/Auth for more Auth implementations
 
 $client = (new \DrDelay\PokemonGo\Client())
     ->setCache(...) // Any PSR-6 compliant cache (Optional for Ptc, necessary for Google, recommended always)

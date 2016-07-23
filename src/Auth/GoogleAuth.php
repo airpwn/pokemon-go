@@ -35,24 +35,22 @@ class GoogleAuth extends AbstractAuth implements CacheAwareInterface
     const REFRESH_TOKEN_CACHE = 'refreshToken';
     const DEVICE_CODE_CACHE = 'deviceCode';
 
-    /** @var string|null */
-    protected $username;
-
-    /** @var string|null */
-    protected $password;
+    /** @var string */
+    protected $identifier = '';
 
     /**
-     * Sets the Google credentials.
+     * Sets the Google identifier (solely for a cache namespace)
+     * Doesn't need your real login credentials, as Google's OAuth service is used (you log in in your browser on google.com).
      *
-     * @param string $username
-     * @param string $password
+     * Note: This is optional, but necessary if you're planning on logging in multiple accounts with the same cache instance
+     *
+     * @param string $identifier Can be your E-Mail, doesn't have to be
      *
      * @return GoogleAuth|$this
      */
-    public function setCredentials(string $username, string $password):GoogleAuth
+    public function setIdentifier(string $identifier):GoogleAuth
     {
-        $this->username = $username;
-        $this->password = $password;
+        $this->identifier = $identifier;
 
         return $this;
     }
@@ -64,7 +62,7 @@ class GoogleAuth extends AbstractAuth implements CacheAwareInterface
 
     public function getUniqueIdentifier():string
     {
-        return $this->username;
+        return $this->identifier;
     }
 
     public function invoke(): AccessToken
