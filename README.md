@@ -3,14 +3,14 @@ This library has the logic to communicate with the Pokemon Go API.
 
 Install / Use
 -------------
-`composer require drdelay/pokemon-go`
+~~`composer require drdelay/pokemon-go`~~
 ```
 TODO: Example
 ```
 
 Credits
 -------
-TODO
+* FeroxRev/Pokemon-Go-Rocket-API (A lot has been transcoded from there)
 
 License
 -------

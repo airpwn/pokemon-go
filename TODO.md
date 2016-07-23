@@ -1,0 +1,5 @@
+- [ ] Add usage examples
+- [ ] Publish on Packagist
+- [ ] Cache access tokens
+- [ ] Google Auth
+- [ ] Basic API calls like pokemons

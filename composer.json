@@ -11,7 +11,9 @@
     ],
     "minimum-stability": "stable",
     "require": {
-        "psr/log": "^1.0"
+        "psr/log": "^1.0",
+        "league/container": "^2.2",
+        "guzzlehttp/guzzle": "^6.2"
     },
     "autoload": {
         "psr-4": { "DrDelay\\PokemonGo\\": "src/" }
