@@ -16,6 +16,7 @@ namespace DrDelay\PokemonGo;
 
 use DrDelay\PokemonGo\Auth\AuthException;
 use DrDelay\PokemonGo\Auth\AuthInterface;
+use DrDelay\PokemonGo\Cache\CacheAwareInterface;
 use DrDelay\PokemonGo\Http\ClientAwareInterface;
 use Fig\Cache\Memory\MemoryPool;
 use GuzzleHttp\Client as GuzzleClient;
@@ -27,7 +28,7 @@ use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
-class Client implements LoggerAwareInterface
+class Client implements CacheAwareInterface, LoggerAwareInterface
 {
     const USER_AGENT = 'Niantic App';
 
@@ -57,6 +58,7 @@ class Client implements LoggerAwareInterface
         $this->container->inflector(ClientAwareInterface::class)->invokeMethod('setHttpClient', [GuzzleClient::class]);
 
         $this->container->share(CacheItemPoolInterface::class, MemoryPool::class);
+        $this->container->inflector(CacheAwareInterface::class)->invokeMethod('setCache', [CacheItemPoolInterface::class]);
     }
 
     /**
@@ -64,9 +66,9 @@ class Client implements LoggerAwareInterface
      *
      * @param LoggerInterface $logger
      *
-     * @return Client|$this
+     * @return Client|LoggerAwareInterface|$this
      */
-    public function setLogger(LoggerInterface $logger):Client
+    public function setLogger(LoggerInterface $logger):LoggerAwareInterface
     {
         $this->container->share(LoggerInterface::class, $logger);
 
@@ -92,9 +94,9 @@ class Client implements LoggerAwareInterface
      *
      * @param CacheItemPoolInterface $cache
      *
-     * @return Client|$this
+     * @return Client|CacheAwareInterface|$this
      */
-    public function setCache(CacheItemPoolInterface $cache):Client
+    public function setCache(CacheItemPoolInterface $cache):CacheAwareInterface
     {
         $this->container->share(CacheItemPoolInterface::class, $cache);
 
@@ -144,7 +146,7 @@ class Client implements LoggerAwareInterface
      *
      * @return string
      */
-    protected static function cacheKey(array $keys):string
+    public static function cacheKey(array $keys):string
     {
         array_unshift($keys, __NAMESPACE__);
 

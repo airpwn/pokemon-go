@@ -25,9 +25,13 @@ trait ClientAwareTrait
      * Sets a HTTP client.
      *
      * @param Client $client
+     *
+     * @return ClientAwareInterface|$this
      */
-    public function setHttpClient(Client $client)
+    public function setHttpClient(Client $client):ClientAwareInterface
     {
         $this->client = $client;
+
+        return $this;
     }
 }

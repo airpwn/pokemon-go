@@ -10,14 +10,20 @@ $auth = (new \DrDelay\PokemonGo\Auth\PtcAuth())
     ->setCredentials('PTCUser', 'PTCPass');
 
 $client = (new \DrDelay\PokemonGo\Client())
-    ->setCache(...) // Optional, any PSR-6 compliant cache
-    ->setAuth($auth)
+    ->setCache(...) // Any PSR-6 compliant cache (Optional for Ptc, necessary for Google, recommended always)
+    ->setAuth($auth) // Anything implementing \DrDelay\PokemonGo\Auth\AuthInterface
     ->setLogger(...); // Optional, any PSR-3 compliant logger
 
 $client->login();
 
 // More to come
 ```
+
+Google login
+------------
+If you login with Google you should catch `\DrDelay\PokemonGo\Auth\DeviceNotVerifiedException` at the login call. It gets raised if a verification on the google website is needed.
+
+See the message, and the `getVerificationUrl` / `getUserCode` methods
 
 Credits
 -------

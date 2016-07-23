@@ -16,10 +16,10 @@ namespace DrDelay\PokemonGo\Auth;
 
 class AccessToken
 {
-    /** @var string|null */
+    /** @var string */
     protected $token;
 
-    /** @var int|null */
+    /** @var int */
     protected $lifetime;
 
     /**

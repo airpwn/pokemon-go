@@ -22,6 +22,8 @@ interface ClientAwareInterface
      * Sets a HTTP client instance on the object.
      *
      * @param Client $client
+     *
+     * @return ClientAwareInterface|$this
      */
-    public function setHttpClient(Client $client);
+    public function setHttpClient(Client $client):self;
 }

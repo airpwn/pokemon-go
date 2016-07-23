@@ -1,6 +1,6 @@
 - [x] Add usage examples
 - [ ] Publish on Packagist
 - [x] Cache access tokens
-- [ ] Google Auth
+- [x] Google Auth
 - [ ] Basic API calls like pokemons
 - [x] Cache expires time
