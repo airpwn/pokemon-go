@@ -11,7 +11,7 @@ $auth = (new \DrDelay\PokemonGo\Auth\PtcAuth())
 // Check the folder ./src/Auth for more Auth implementations
 
 $client = (new \DrDelay\PokemonGo\Client())
-    ->setCache(...) // Any PSR-6 compliant cache (Optional for Ptc, necessary for Google, recommended always)
+    ->setCache(...) // Any PSR-6 compliant cache (Optional for Ptc/GoogleAuth, **necessary** for GoogleOAuth, recommended always)
     ->setAuth($auth) // Anything implementing \DrDelay\PokemonGo\Auth\AuthInterface
     ->setLogger(...); // Optional, any PSR-3 compliant logger
 
