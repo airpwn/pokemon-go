@@ -17,11 +17,25 @@ namespace DrDelay\PokemonGo\Auth;
 interface AuthInterface
 {
     /**
+     * The auth mechanism the implementation represents.
+     *
+     * @return string
+     */
+    public function getAuthType():string;
+
+    /**
+     * Get the identifier for the account this tries to login to (most likely a username).
+     *
+     * @return string
+     */
+    public function getUniqueIdentifier():string;
+
+    /**
      * Use this AuthInterface to get an access token.
      *
      * @return string
      *
      * @throws AuthException
      */
-    public function __invoke(): string;
+    public function invoke(): string;
 }

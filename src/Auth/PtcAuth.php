@@ -14,6 +14,7 @@
 
 namespace DrDelay\PokemonGo\Auth;
 
+use DrDelay\PokemonGo\Enum\AuthType;
 use DrDelay\PokemonGo\Resources;
 use function GuzzleHttp\json_decode;
 
@@ -26,6 +27,8 @@ class PtcAuth extends AbstractAuth
     protected $password;
 
     /**
+     * Sets the Ptc credentials.
+     *
      * @param string $username
      * @param string $password
      *
@@ -39,7 +42,17 @@ class PtcAuth extends AbstractAuth
         return $this;
     }
 
-    public function __invoke(): string
+    public function getAuthType():string
+    {
+        return AuthType::PTC;
+    }
+
+    public function getUniqueIdentifier():string
+    {
+        return $this->username;
+    }
+
+    public function invoke(): string
     {
         $session = json_decode($this->client->get(Resources::PTC_LOGIN_URL)->getBody());
 

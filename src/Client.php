@@ -14,14 +14,15 @@
 
 namespace DrDelay\PokemonGo;
 
-use DrDelay\PokemonGo\Auth\AbstractAuth;
 use DrDelay\PokemonGo\Auth\AuthException;
 use DrDelay\PokemonGo\Auth\AuthInterface;
 use DrDelay\PokemonGo\Http\ClientAwareInterface;
+use Fig\Cache\Memory\MemoryPool;
 use GuzzleHttp\Client as GuzzleClient;
 use League\Container\Argument\RawArgument;
 use League\Container\Container;
 use League\Container\Exception\NotFoundException as AliasNotFound;
+use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -38,7 +39,7 @@ class Client implements LoggerAwareInterface
     {
         $this->container = new Container();
 
-        $this->container->share(LoggerInterface::class, new NullLogger());
+        $this->container->share(LoggerInterface::class, NullLogger::class);
         $this->container->inflector(LoggerAwareInterface::class)->invokeMethod('setLogger', [LoggerInterface::class]);
 
         $this->container->share(GuzzleClient::class, GuzzleClient::class)->withArgument(new RawArgument([
@@ -52,6 +53,8 @@ class Client implements LoggerAwareInterface
             'allow_redirects' => false,
         ]));
         $this->container->inflector(ClientAwareInterface::class)->invokeMethod('setHttpClient', [GuzzleClient::class]);
+
+        $this->container->share(CacheItemPoolInterface::class, MemoryPool::class);
     }
 
     /**
@@ -77,11 +80,21 @@ class Client implements LoggerAwareInterface
      */
     public function setAuth(AuthInterface $auth):Client
     {
-        if ($auth instanceof AbstractAuth) {
-            $auth->setLogger($this->container->get(LoggerInterface::class));
-            $auth->setHttpClient($this->container->get(GuzzleClient::class));
-        }
         $this->container->add(AuthInterface::class, $auth);
+
+        return $this;
+    }
+
+    /**
+     * Sets a cache.
+     *
+     * @param CacheItemPoolInterface $cache
+     *
+     * @return Client|$this
+     */
+    public function setCache(CacheItemPoolInterface $cache):Client
+    {
+        $this->container->share(CacheItemPoolInterface::class, $cache);
 
         return $this;
     }
@@ -93,18 +106,43 @@ class Client implements LoggerAwareInterface
      */
     public function login()
     {
-        // TODO: Cache Access Token?
-
-        /** @var LoggerInterface $logger */
-        $logger = $this->container->get(LoggerInterface::class);
-        $logger->debug('Doing login');
-
+        /** @var AuthInterface $auth */
+        $auth = null;
         try {
-            $this->accessToken = $this->container->get(AuthInterface::class);
+            $auth = $this->container->get(AuthInterface::class);
         } catch (AliasNotFound $e) {
             throw new AuthException('You need to set an auth mechanism with setAuth', 0, $e);
         }
 
-        $logger->notice('Got AccessToken '.$this->accessToken);
+        /** @var CacheItemPoolInterface $cache */
+        $cache = $this->container->get(CacheItemPoolInterface::class);
+        /** @var LoggerInterface $logger */
+        $logger = $this->container->get(LoggerInterface::class);
+
+        $item = $cache->getItem(static::cacheKey([$auth->getAuthType(), $auth->getUniqueIdentifier()]));
+        if ($item->isHit()) {
+            $logger->debug('Login Cache hit');
+            $this->accessToken = $item->get();
+        } else {
+            $logger->info('Cache miss -> Doing login');
+            $this->accessToken = $auth->invoke();
+            $cache->save($item->set($this->accessToken));
+        }
+
+        $logger->notice('Using AccessToken '.$this->accessToken);
+    }
+
+    /**
+     * Prefixes a cache key.
+     *
+     * @param string[] $keys
+     *
+     * @return string
+     */
+    protected static function cacheKey(array $keys):string
+    {
+        array_unshift($keys, __NAMESPACE__);
+
+        return implode('_', $keys);
     }
 }

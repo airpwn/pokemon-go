@@ -6,7 +6,17 @@ Install / Use
 -------------
 ~~`composer require drdelay/pokemon-go`~~
 ```
-TODO: Example
+$auth = (new \DrDelay\PokemonGo\Auth\PtcAuth())
+    ->setCredentials('PTCUser', 'PTCPass');
+
+$client = (new \DrDelay\PokemonGo\Client())
+    ->setCache(...) // Optional, any PSR-6 compliant cache
+    ->setAuth($auth)
+    ->setLogger(...); // Optional, any PSR-3 compliant logger
+
+$client->login();
+
+// More to come
 ```
 
 Credits
