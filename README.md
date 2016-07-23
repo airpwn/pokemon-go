@@ -20,6 +20,12 @@ $client->login();
 // More to come
 ```
 
+Google login
+------------
+There are currently 2 implementations of the Google login (see [#1](https://github.com/DrDelay/pokemon-go/pull/1)):
+* GoogleAuth: You have to provide your Google account credentials
+* GoogleOAuth: You do **not** have to provide your Google account credentials, but do the Google OAuth process by entering a code on *google.com/device* (being logged in **there**)
+
 Google OAuth login
 ------------------
 If you login with GoogleOAuth you should catch `\DrDelay\PokemonGo\Auth\DeviceNotVerifiedException` at the login call. It gets raised if a verification on the google website is needed.
