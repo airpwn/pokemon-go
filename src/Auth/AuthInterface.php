@@ -33,9 +33,9 @@ interface AuthInterface
     /**
      * Use this AuthInterface to get an access token.
      *
-     * @return string
+     * @return AccessToken
      *
      * @throws AuthException
      */
-    public function invoke(): string;
+    public function invoke(): AccessToken;
 }

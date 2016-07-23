@@ -52,7 +52,7 @@ class PtcAuth extends AbstractAuth
         return $this->username;
     }
 
-    public function invoke(): string
+    public function invoke(): AccessToken
     {
         $session = json_decode($this->client->get(Resources::PTC_LOGIN_URL)->getBody());
 
@@ -90,6 +90,6 @@ class PtcAuth extends AbstractAuth
             throw new AuthException('No access_token returned from PTC');
         }
 
-        return $tokenParts['access_token'];
+        return new AccessToken($tokenParts['access_token'], (int) $tokenParts['expires']);
     }
 }

@@ -3,4 +3,4 @@
 - [x] Cache access tokens
 - [ ] Google Auth
 - [ ] Basic API calls like pokemons
-- [ ] Cache expires time
+- [x] Cache expires time

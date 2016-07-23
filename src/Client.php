@@ -125,8 +125,11 @@ class Client implements LoggerAwareInterface
             $this->accessToken = $item->get();
         } else {
             $logger->info('Cache miss -> Doing login');
-            $this->accessToken = $auth->invoke();
-            $cache->save($item->set($this->accessToken));
+            $accessToken = $auth->invoke();
+            $this->accessToken = $accessToken->getToken();
+            $cache->save($item
+                ->set($this->accessToken)
+                ->expiresAfter($accessToken->getLifetime()));
         }
 
         $logger->notice('Using AccessToken '.$this->accessToken);
