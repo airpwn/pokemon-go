@@ -1,5 +1,6 @@
-# pokemon-go - Pokemon Go PHP Library v0.1.0
-This library has the logic to communicate with the Pokemon Go API.
+# pokemon-go - Pokemon Go API PHP Library
+This library aims to provide the tools to communicate with the Pokemon Go API.
+It is still work in progress.
 
 Install / Use
 -------------

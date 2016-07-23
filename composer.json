@@ -1,6 +1,6 @@
 {
     "name": "drdelay/pokemon-go",
-    "description": "Pokemon Go Library",
+    "description": "Pokemon Go API Library",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -11,6 +11,7 @@
     ],
     "minimum-stability": "stable",
     "require": {
+        "php": "^7.0",
         "psr/log": "^1.0",
         "league/container": "^2.2",
         "guzzlehttp/guzzle": "^6.2"
