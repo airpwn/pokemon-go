@@ -17,7 +17,7 @@
         "guzzlehttp/guzzle": "^6.2",
         "psr/cache": "^1.0",
         "fig/cache-util": "^1.0@dev",
-        "jaspervdm/pogoprotos-php": "dev-master"
+        "jaspervdm/pogoprotos-php": "dev-master#41c881365322408df8ef4611bf3a586f268aa184"
     },
     "autoload": {
         "psr-4": { "DrDelay\\PokemonGo\\": "src/" }
