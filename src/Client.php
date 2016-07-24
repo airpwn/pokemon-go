@@ -258,10 +258,7 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
         $logger->debug('Sending request');
 
         $response = $client->post(static::API_URL, ['body' => $request->toProtobuf()]);
-        // TODO: Remove Debug:
-        echo (string) $response->getBody();
         $responseEnv = new ResponseEnvelope(StreamWrapper::getResource($response->getBody()));
-
         /** @var AuthTicket|null $authTicket */
         $authTicket = $responseEnv->getAuthTicket();
         if ($authTicket) {
