@@ -16,6 +16,6 @@ namespace DrDelay\PokemonGo\Enum;
 
 abstract class AuthType
 {
-    const PTC = 'Ptc';
-    const GOOGLE = 'Google';
+    const PTC = 'ptc';
+    const GOOGLE = 'google';
 }
