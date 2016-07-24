@@ -20,6 +20,7 @@ use DrDelay\PokemonGo\Client;
 use DrDelay\PokemonGo\Enum\AuthType;
 use Fig\Cache\Memory\MemoryPool;
 use GuzzleHttp\Exception\RequestException;
+use Psr\Cache\CacheItemInterface;
 use function GuzzleHttp\json_decode;
 
 class GoogleOAuth extends AbstractAuth implements CacheAwareInterface
@@ -37,6 +38,14 @@ class GoogleOAuth extends AbstractAuth implements CacheAwareInterface
 
     /** @var string */
     protected $identifier = '';
+
+    /** @var string[] */
+    protected $cacheNamespace;
+
+    public function __construct()
+    {
+        $this->cacheNamespace = [$this->getAuthType(), __NAMESPACE__];
+    }
 
     /**
      * Sets the Google identifier (solely for a cache namespace)
@@ -67,9 +76,7 @@ class GoogleOAuth extends AbstractAuth implements CacheAwareInterface
 
     public function invoke(): AccessToken
     {
-        $cacheNamespace = [$this->getAuthType(), __NAMESPACE__];
-
-        $refreshTokenCacheItem = $this->cache->getItem(Client::cacheKey(array_merge($cacheNamespace, [static::REFRESH_TOKEN_CACHE, $this->getUniqueIdentifier()])));
+        $refreshTokenCacheItem = $this->cache->getItem(Client::cacheKey(array_merge($this->cacheNamespace, [static::REFRESH_TOKEN_CACHE, $this->getUniqueIdentifier()])));
         $refreshToken = $refreshTokenCacheItem->get();
         if ($refreshTokenCacheItem->isHit()) {
             $this->logger->info('Refresh Token in Cache');
@@ -78,43 +85,7 @@ class GoogleOAuth extends AbstractAuth implements CacheAwareInterface
                 throw new AuthException('A persistent cache implementation is necessary for Google login');
             }
 
-            $deviceCodeCacheItem = $this->cache->getItem(Client::cacheKey(array_merge($cacheNamespace, [static::DEVICE_CODE_CACHE, $this->getUniqueIdentifier()])));
-            $deviceCode = $deviceCodeCacheItem->get();
-            if ($deviceCodeCacheItem->isHit()) {
-                $this->logger->info('Device Code in Cache');
-                try {
-                    $accessToken = json_decode($this->client->post(static::GOOGLE_OAUTH_TOKEN_URL, [
-                        'form_params' => [
-                            'client_id' => static::GOOGLE_OAUTH_CLIENT_ID,
-                            'client_secret' => static::GOOGLE_OAUTH_CLIENT_SECRET,
-                            'code' => $deviceCode->device_code,
-                            'grant_type' => 'http://oauth.net/grant_type/device/1.0',
-                            'scope' => static::SCOPE,
-                        ],
-                    ])->getBody());
-                    if ($accessToken->access_token && $accessToken->refresh_token && $accessToken->id_token) {
-                        $this->cache->save($refreshTokenCacheItem->set($accessToken->refresh_token));
-
-                        return new AccessToken($accessToken->id_token, (int) $accessToken->expires_in);
-                    }
-                    throw new AuthException('No access_token/refresh_token/id_token returned from Google');
-                } catch (RequestException $e) {
-                    if (!$e->hasResponse() || json_decode($e->getResponse()->getBody())->error != 'authorization_pending') {
-                        throw $e;
-                    }
-                }
-            } else {
-                $deviceCode = json_decode($this->client->post(static::GOOGLE_OAUTH_DEVICE_CODE_URL, [
-                    'form_params' => [
-                        'client_id' => static::GOOGLE_OAUTH_CLIENT_ID,
-                        'scope' => static::SCOPE,
-                    ],
-                ])->getBody());
-                $this->cache->save($deviceCodeCacheItem
-                    ->set($deviceCode)
-                    ->expiresAfter((int) $deviceCode->expires_in));
-            }
-            throw new DeviceNotVerifiedException($deviceCode->verification_url, $deviceCode->user_code);
+            return $this->obtainRefreshToken($refreshTokenCacheItem);
         }
 
         $token = json_decode($this->client->post(static::GOOGLE_OAUTH_TOKEN_URL, [
@@ -132,5 +103,56 @@ class GoogleOAuth extends AbstractAuth implements CacheAwareInterface
         }
 
         return new AccessToken($token->id_token, (int) $token->expires_in);
+    }
+
+    /**
+     * If the refresh token is not in cache, get it by verifying the device.
+     *
+     * @param CacheItemInterface $refreshTokenCacheItem
+     *
+     * @return AccessToken
+     *
+     * @throws AuthException
+     * @throws DeviceNotVerifiedException With the verification URL and user code
+     */
+    protected function obtainRefreshToken(CacheItemInterface $refreshTokenCacheItem):AccessToken
+    {
+        $deviceCodeCacheItem = $this->cache->getItem(Client::cacheKey(array_merge($this->cacheNamespace, [static::DEVICE_CODE_CACHE, $this->getUniqueIdentifier()])));
+        $deviceCode = $deviceCodeCacheItem->get();
+        if ($deviceCodeCacheItem->isHit()) {
+            $this->logger->info('Device Code in Cache');
+            try {
+                $accessToken = json_decode($this->client->post(static::GOOGLE_OAUTH_TOKEN_URL, [
+                    'form_params' => [
+                        'client_id' => static::GOOGLE_OAUTH_CLIENT_ID,
+                        'client_secret' => static::GOOGLE_OAUTH_CLIENT_SECRET,
+                        'code' => $deviceCode->device_code,
+                        'grant_type' => 'http://oauth.net/grant_type/device/1.0',
+                        'scope' => static::SCOPE,
+                    ],
+                ])->getBody());
+                if ($accessToken->access_token && $accessToken->refresh_token && $accessToken->id_token) {
+                    $this->cache->save($refreshTokenCacheItem->set($accessToken->refresh_token));
+
+                    return new AccessToken($accessToken->id_token, (int) $accessToken->expires_in);
+                }
+                throw new AuthException('No access_token/refresh_token/id_token returned from Google');
+            } catch (RequestException $e) {
+                if (!$e->hasResponse() || json_decode($e->getResponse()->getBody())->error != 'authorization_pending') {
+                    throw $e;
+                }
+            }
+        } else {
+            $deviceCode = json_decode($this->client->post(static::GOOGLE_OAUTH_DEVICE_CODE_URL, [
+                'form_params' => [
+                    'client_id' => static::GOOGLE_OAUTH_CLIENT_ID,
+                    'scope' => static::SCOPE,
+                ],
+            ])->getBody());
+            $this->cache->save($deviceCodeCacheItem
+                ->set($deviceCode)
+                ->expiresAfter((int) $deviceCode->expires_in));
+        }
+        throw new DeviceNotVerifiedException($deviceCode->verification_url, $deviceCode->user_code);
     }
 }
