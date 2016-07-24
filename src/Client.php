@@ -23,6 +23,7 @@ use DrDelay\PokemonGo\Http\RequestBuilder;
 use DrDelay\PokemonGo\Http\RequestException;
 use Fig\Cache\Memory\MemoryPool;
 use GuzzleHttp\Client as GuzzleClient;
+use GuzzleHttp\Psr7\StreamWrapper;
 use League\Container\Argument\RawArgument;
 use League\Container\Container;
 use League\Container\Exception\NotFoundException as AliasNotFound;
@@ -259,7 +260,8 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
         $response = $client->post(static::API_URL, ['body' => $request->toProtobuf()]);
         // TODO: Remove Debug:
         echo (string) $response->getBody();
-        $responseEnv = new ResponseEnvelope((string) $response->getBody());
+        $responseEnv = new ResponseEnvelope(StreamWrapper::getResource($response->getBody()));
+
         /** @var AuthTicket|null $authTicket */
         $authTicket = $responseEnv->getAuthTicket();
         if ($authTicket) {
