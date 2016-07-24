@@ -230,7 +230,7 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
 
         $apiUrl = $response->getApiUrl();
         if (!$apiUrl) {
-            // Debug:
+            // TODO: Remove Debug:
             var_dump($response->toProtobuf());
             throw new RequestException('No API Url returned');
         }
@@ -257,6 +257,8 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
         $logger->debug('Sending request');
 
         $response = $client->post(static::API_URL, ['body' => $request->toProtobuf()]);
+        // TODO: Remove Debug:
+        echo (string) $response->getBody();
         $responseEnv = new ResponseEnvelope((string) $response->getBody());
         /** @var AuthTicket|null $authTicket */
         $authTicket = $responseEnv->getAuthTicket();
