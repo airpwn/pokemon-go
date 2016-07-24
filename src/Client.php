@@ -17,12 +17,22 @@ namespace DrDelay\PokemonGo;
 use DrDelay\PokemonGo\Auth\AuthException;
 use DrDelay\PokemonGo\Auth\AuthInterface;
 use DrDelay\PokemonGo\Cache\CacheAwareInterface;
+use DrDelay\PokemonGo\Geography\Coordinate;
 use DrDelay\PokemonGo\Http\ClientAwareInterface;
+use DrDelay\PokemonGo\Http\RequestBuilder;
+use DrDelay\PokemonGo\Http\RequestException;
 use Fig\Cache\Memory\MemoryPool;
 use GuzzleHttp\Client as GuzzleClient;
 use League\Container\Argument\RawArgument;
 use League\Container\Container;
 use League\Container\Exception\NotFoundException as AliasNotFound;
+use POGOProtos\Networking\Envelopes\AuthTicket;
+use POGOProtos\Networking\Envelopes\RequestEnvelope;
+use POGOProtos\Networking\Envelopes\ResponseEnvelope;
+use POGOProtos\Networking\Requests\Messages\DownloadSettingsMessage;
+use POGOProtos\Networking\Requests\Messages\GetInventoryMessage;
+use POGOProtos\Networking\Requests\Request;
+use POGOProtos\Networking\Requests\RequestType;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
@@ -31,12 +41,27 @@ use Psr\Log\NullLogger;
 class Client implements CacheAwareInterface, LoggerAwareInterface
 {
     const USER_AGENT = 'Niantic App';
+    const API_URL = 'https://pgorelease.nianticlabs.com/plfe/rpc';
+
+    const DOWNLOAD_SETTINGS_HASH = '4a2e9bc330dae60e7b74fc85b98868ab4700802e';
 
     /** @var Container */
     protected $container;
 
     /** @var string|null */
     protected $accessToken;
+
+    /** @var string|null */
+    protected $authType;
+
+    /** @var Coordinate|null */
+    protected $location;
+
+    /** @var AuthTicket|null */
+    protected $authTicket;
+
+    /** @var string|null */
+    protected $endpoint;
 
     public function __construct()
     {
@@ -136,7 +161,11 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
                 ->expiresAfter($accessToken->getLifetime()));
         }
 
+        $this->authType = $auth->getAuthType();
+
         $logger->notice('Using AccessToken '.$this->accessToken);
+
+        $this->createEndpoint();
     }
 
     /**
@@ -151,5 +180,91 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
         array_unshift($keys, __NAMESPACE__);
 
         return implode('_', $keys);
+    }
+
+    /**
+     * Set a location.
+     *
+     * @param Coordinate $coordinate
+     *
+     * @return Client|$this
+     */
+    public function setLocation(Coordinate $coordinate):Client
+    {
+        $this->location = $coordinate;
+
+        return $this;
+    }
+
+    /**
+     * Initial communication with the API.
+     *
+     * @throws RequestException
+     */
+    protected function createEndpoint()
+    {
+        $inventory = new Request();
+        $inventory->setRequestType(RequestType::GET_INVENTORY);
+        $inventoryMessage = new GetInventoryMessage();
+        $inventoryMessage->setLastTimestampMs(0);
+        $inventory->setRequestMessage($inventoryMessage->toProtobuf());
+
+        $settings = new Request();
+        $settings->setRequestType(RequestType::DOWNLOAD_SETTINGS);
+        $settingsMessage = new DownloadSettingsMessage();
+        $settingsMessage->setHash(static::DOWNLOAD_SETTINGS_HASH);
+        $settings->setRequestMessage($settingsMessage->toProtobuf());
+
+        $request = RequestBuilder::getInitialRequest($this->accessToken, $this->authType, $this->location, [
+            RequestType::GET_PLAYER,
+            RequestType::GET_HATCHED_EGGS,
+            $inventory,
+            RequestType::CHECK_AWARDED_BADGES,
+            $settings,
+        ]);
+
+        $response = $this->sendRequest($request);
+
+        /** @var LoggerInterface $logger */
+        $logger = $this->container->get(LoggerInterface::class);
+
+        $apiUrl = $response->getApiUrl();
+        if (!$apiUrl) {
+            // Debug:
+            var_dump($response->toProtobuf());
+            throw new RequestException('No API Url returned');
+        }
+        $logger->info('Got API Url '.$apiUrl);
+        $this->endpoint = $apiUrl;
+    }
+
+    /**
+     * Sends a request, saves a possibly returned AuthTicket.
+     *
+     * @param RequestEnvelope $request
+     *
+     * @return ResponseEnvelope
+     *
+     * @see AuthTicket
+     */
+    public function sendRequest(RequestEnvelope $request):ResponseEnvelope
+    {
+        /** @var LoggerInterface $logger */
+        $logger = $this->container->get(LoggerInterface::class);
+        /** @var GuzzleClient $client */
+        $client = $this->container->get(GuzzleClient::class);
+
+        $logger->debug('Sending request');
+
+        $response = $client->post(static::API_URL, ['body' => $request->toProtobuf()]);
+        $responseEnv = new ResponseEnvelope((string) $response->getBody());
+        /** @var AuthTicket|null $authTicket */
+        $authTicket = $responseEnv->getAuthTicket();
+        if ($authTicket) {
+            $logger->info('Received AuthTicket');
+            $this->authTicket = $authTicket;
+        }
+
+        return $responseEnv;
     }
 }

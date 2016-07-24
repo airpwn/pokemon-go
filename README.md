@@ -15,6 +15,7 @@ $client = (new \DrDelay\PokemonGo\Client())
     ->setAuth($auth) // Anything implementing \DrDelay\PokemonGo\Auth\AuthInterface
     ->setLogger(...); // Optional, any PSR-3 compliant logger
 
+$client->setLocation(...); // A \DrDelay\PokemonGo\Geography\Coordinate
 $client->login();
 
 // More to come
@@ -34,7 +35,8 @@ See the message, and the `getVerificationUrl` / `getUserCode` methods
 
 Credits
 -------
-* FeroxRev/Pokemon-Go-Rocket-API (A lot has been transcoded from there)
+* FeroxRev/Pokemon-Go-Rocket-API
+* jaspervdm/pogoapi-php & jaspervdm/pogoprotos-php
 
 License
 -------
