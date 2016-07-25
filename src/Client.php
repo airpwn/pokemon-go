@@ -12,7 +12,6 @@
 
 namespace DrDelay\PokemonGo;
 
-use DrDelay\PokemonGo\Auth\AuthException;
 use DrDelay\PokemonGo\Auth\AuthInterface;
 use DrDelay\PokemonGo\Cache\CacheAwareInterface;
 use DrDelay\PokemonGo\Http\ClientAwareInterface;
@@ -103,8 +102,6 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
 
     /**
      * Perform the login.
-     *
-     * @throws AuthException
      */
     public function login()
     {
@@ -113,7 +110,7 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
         try {
             $auth = $this->container->get(AuthInterface::class);
         } catch (AliasNotFound $e) {
-            throw new AuthException('You need to set an auth mechanism with setAuth', 0, $e);
+            throw new \BadMethodCallException('You need to set an auth mechanism with setAuth', 0, $e);
         }
 
         /** @var CacheItemPoolInterface $cache */

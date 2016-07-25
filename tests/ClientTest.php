@@ -12,7 +12,6 @@
 
 namespace DrDelay\PokemonGo\Test;
 
-use DrDelay\PokemonGo\Auth\AuthException;
 use DrDelay\PokemonGo\Client;
 
 class ClientTest extends \PHPUnit_Framework_TestCase
@@ -30,7 +29,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
      */
     public function testAuthRequired()
     {
-        $this->expectException(AuthException::class);
+        $this->expectException(\BadMethodCallException::class);
         $client = new Client();
         $client->login();
     }
