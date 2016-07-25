@@ -4,4 +4,3 @@
 - [x] Google Auth
 - [ ] Basic API calls like pokemons
 - [x] Cache expires time
-- [ ] Adjust all headers (inkl. Tests) (- (c) )

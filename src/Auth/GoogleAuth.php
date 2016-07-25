@@ -3,9 +3,7 @@
 /*
  * This file is part of drdelay/pokemon-go.
  *
- * (c) DrDelay <info@vi0lation.de>
- *
- * This source file is subject to the MIT license that is bundled with this source code in the file LICENSE.
+ * This source file is subject to the MIT license that is bundled with this source code in the file LICENSE.md .
  */
 
 /**
@@ -133,5 +131,4 @@ class GoogleAuth extends AbstractAuth
 
         return new AccessToken($result['Auth'], strtotime('+30 minutes'));
     }
-
 }
