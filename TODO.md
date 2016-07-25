@@ -4,5 +4,5 @@
 - [x] Google Auth
 - [x] Cache expires time
 - [ ] Fix RequestBuilder (Location as Ulongs?)
-- [ ] USe AuthTicket for subsequent requests
+- [ ] Use AuthTicket for subsequent requests
 - [ ] Implement basic Api calls
