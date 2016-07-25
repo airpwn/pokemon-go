@@ -118,7 +118,7 @@ abstract class RequestBuilder
      *
      * @return int
      */
-    public static function floatAsUlong($value)
+    public static function floatAsUlong($value):int
     {
         assert(PHP_INT_SIZE === 8, '64bit PHP required');
 
