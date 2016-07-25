@@ -33,19 +33,12 @@ class GoogleOAuth extends AbstractAuth implements CacheAwareInterface
     const GOOGLE_OAUTH_CLIENT_SECRET = 'NCjF1TLi2CcY6t5mt0ZveuL7';
     const SCOPE = 'openid email https://www.googleapis.com/auth/userinfo.email';
 
+    const CACHE_NAMESPACE = 'GoogleOAuth';
     const REFRESH_TOKEN_CACHE = 'refreshToken';
     const DEVICE_CODE_CACHE = 'deviceCode';
 
     /** @var string */
     protected $identifier = '';
-
-    /** @var string[] */
-    protected $cacheNamespace;
-
-    public function __construct()
-    {
-        $this->cacheNamespace = [$this->getAuthType(), __NAMESPACE__];
-    }
 
     /**
      * Sets the Google identifier (solely for a cache namespace)
@@ -76,7 +69,7 @@ class GoogleOAuth extends AbstractAuth implements CacheAwareInterface
 
     public function invoke(): AccessToken
     {
-        $refreshTokenCacheItem = $this->cache->getItem(Client::cacheKey(array_merge($this->cacheNamespace, [static::REFRESH_TOKEN_CACHE, $this->getUniqueIdentifier()])));
+        $refreshTokenCacheItem = $this->cache->getItem(Client::cacheKey([static::CACHE_NAMESPACE, static::REFRESH_TOKEN_CACHE, $this->getUniqueIdentifier()]));
         $refreshToken = $refreshTokenCacheItem->get();
         if ($refreshTokenCacheItem->isHit()) {
             $this->logger->info('Refresh Token in Cache');
@@ -117,7 +110,7 @@ class GoogleOAuth extends AbstractAuth implements CacheAwareInterface
      */
     protected function obtainRefreshToken(CacheItemInterface $refreshTokenCacheItem):AccessToken
     {
-        $deviceCodeCacheItem = $this->cache->getItem(Client::cacheKey(array_merge($this->cacheNamespace, [static::DEVICE_CODE_CACHE, $this->getUniqueIdentifier()])));
+        $deviceCodeCacheItem = $this->cache->getItem(Client::cacheKey([static::CACHE_NAMESPACE, static::DEVICE_CODE_CACHE, $this->getUniqueIdentifier()]));
         $deviceCode = $deviceCodeCacheItem->get();
         if ($deviceCodeCacheItem->isHit()) {
             $this->logger->info('Device Code in Cache');
