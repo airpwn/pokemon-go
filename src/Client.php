@@ -3,9 +3,7 @@
 /*
  * This file is part of drdelay/pokemon-go.
  *
- * (c) DrDelay <info@vi0lation.de>
- *
- * This source file is subject to the MIT license that is bundled with this source code in the file LICENSE.
+ * This source file is subject to the MIT license that is bundled with this source code in the file LICENSE.md .
  */
 
 /**
@@ -14,7 +12,6 @@
 
 namespace DrDelay\PokemonGo;
 
-use DrDelay\PokemonGo\Auth\AuthException;
 use DrDelay\PokemonGo\Auth\AuthInterface;
 use DrDelay\PokemonGo\Cache\CacheAwareInterface;
 use DrDelay\PokemonGo\Geography\Coordinate;
@@ -131,8 +128,6 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
 
     /**
      * Perform the login.
-     *
-     * @throws AuthException
      */
     public function login()
     {
@@ -141,7 +136,7 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
         try {
             $auth = $this->container->get(AuthInterface::class);
         } catch (AliasNotFound $e) {
-            throw new AuthException('You need to set an auth mechanism with setAuth', 0, $e);
+            throw new \BadMethodCallException('You need to set an auth mechanism with setAuth', 0, $e);
         }
 
         /** @var CacheItemPoolInterface $cache */

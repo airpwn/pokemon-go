@@ -2,11 +2,17 @@
     "name": "drdelay/pokemon-go",
     "description": "Pokemon Go API Library",
     "type": "library",
+    "keywords": [
+        "DrDelay",
+        "pokemon-go"
+    ],
+    "homepage": "https://github.com/DrDelay/pokemon-go",
     "license": "MIT",
     "authors": [
         {
             "name": "DrDelay",
-            "email": "info@vi0lation.de"
+            "email": "info@vi0lation.de",
+            "role": "Developer"
         }
     ],
     "minimum-stability": "stable",
@@ -19,7 +25,25 @@
         "fig/cache-util": "^1.0@dev",
         "jaspervdm/pogoprotos-php": "dev-master#41c881365322408df8ef4611bf3a586f268aa184"
     },
+    "require-dev": {
+        "phpunit/phpunit": "~4.0||~5.0",
+        "squizlabs/php_codesniffer": "~2.3"
+    },
     "autoload": {
-        "psr-4": { "DrDelay\\PokemonGo\\": "src/" }
+        "psr-4": {
+            "DrDelay\\PokemonGo\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "DrDelay\\PokemonGo\\Test\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "format": "phpcbf --standard=psr2 src/"
+    },
+    "config": {
+        "sort-packages": true
     }
 }
