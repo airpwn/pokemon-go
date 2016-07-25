@@ -3,4 +3,6 @@
 - [x] Cache access tokens
 - [x] Google Auth
 - [x] Cache expires time
-- [ ] Get createEndpoint / Api communication working
+- [ ] Fix RequestBuilder (Location as Ulongs?)
+- [ ] USe AuthTicket for subsequent requests
+- [ ] Implement basic Api calls

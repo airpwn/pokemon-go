@@ -44,7 +44,7 @@ abstract class RequestBuilder
         $auth->setProvider($authType);
         $token = new RequestEnvelope_AuthInfo_JWT();
         $token->setContents($accessToken);
-        $token->setUnknown2(59);
+        $token->setUnknown2(14);
         $auth->setToken($token);
 
         return static::_request($auth, $location, $requestTypes);
@@ -108,5 +108,20 @@ abstract class RequestBuilder
         $env->addAllRequests($requests);
 
         return $env;
+    }
+
+    /**
+     * Converts a float to ulong
+     * Requires a 64bit PHP Environment.
+     *
+     * @param float|int $value
+     *
+     * @return int
+     */
+    public static function floatAsUlong($value)
+    {
+        assert(PHP_INT_SIZE === 8, '64bit PHP required');
+
+        return unpack('Q', pack('d', $value))[1];
     }
 }
