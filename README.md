@@ -72,7 +72,7 @@ If you discover any security related issues, please email info@vi0lation.de inst
 ## Credits
 
 - [DrDelay][link-author]
-- FeroxRev/Pokemon-Go-Rocket-API
+- [FeroxRev](https://github.com/FeroxRev/Pokemon-Go-Rocket-API)
 - [All Contributors][link-contributors]
 
 ## License
