@@ -3,6 +3,7 @@
 - [x] Cache access tokens
 - [x] Google Auth
 - [x] Cache expires time
-- [ ] Fix RequestBuilder (Location as Ulongs?)
-- [ ] Use AuthTicket for subsequent requests
-- [ ] Implement basic Api calls
+- [ ] Fix Location as Ulongs?
+- [x] Use AuthTicket for subsequent requests
+- [ ] Implement basic Api calls: Save GET_PLAYER Response (Generate new Proto files?)
+- [ ] Fix protocolbuffers read_bytes error

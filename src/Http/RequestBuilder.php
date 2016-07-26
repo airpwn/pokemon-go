@@ -23,6 +23,7 @@ abstract class RequestBuilder
 {
     // TODO: Random?
     const RPC_ID = 1469378659230941192;
+    const REQUEST_CODE = 2;
 
     /**
      * Request generation by token and type (Initial).
@@ -30,11 +31,12 @@ abstract class RequestBuilder
      * @param string     $accessToken
      * @param string     $authType
      * @param Coordinate $location
-     * @param array      $requestTypes An array of RequestType consts
+     * @param array      $requestTypes An array of RequestType consts or Request objects
      *
      * @return RequestEnvelope
      *
      * @see RequestType
+     * @see Request
      */
     public static function getInitialRequest(string $accessToken, string $authType, Coordinate $location, array $requestTypes):RequestEnvelope
     {
@@ -53,11 +55,12 @@ abstract class RequestBuilder
      *
      * @param AuthTicket $authTicket
      * @param Coordinate $location
-     * @param array      $requestTypes An array of RequestType consts
+     * @param array      $requestTypes An array of RequestType consts or Request objects
      *
      * @return RequestEnvelope
      *
      * @see RequestType
+     * @see Request
      */
     public static function getRequest(AuthTicket $authTicket, Coordinate $location, array $requestTypes):RequestEnvelope
     {
@@ -69,11 +72,12 @@ abstract class RequestBuilder
      *
      * @param RequestEnvelope_AuthInfo|AuthTicket $auth
      * @param Coordinate                          $location
-     * @param array                               $requestTypes An array of RequestType consts
+     * @param array                               $requestTypes An array of RequestType consts or Request objects
      *
      * @return RequestEnvelope
      *
      * @see RequestType
+     * @see Request
      */
     protected static function _request($auth, Coordinate $location, array $requestTypes):RequestEnvelope
     {
@@ -86,11 +90,14 @@ abstract class RequestBuilder
             throw new \BadMethodCallException('Auth must be an instance of RequestEnvelope_AuthInfo or AuthTicket');
         }
 
-        $env->setStatusCode(2);
+        $env->setStatusCode(static::REQUEST_CODE);
         $env->setRequestId(static::RPC_ID);
+
+        // Most likely wrong format. Other APIs send it convert to a Ulong
         $env->setLatitude($location->getLatitude());
         $env->setLongitude($location->getLongitude());
         $env->setAltitude($location->getAltitude());
+
         $env->setUnknown12(989);
 
         $requests = [];
@@ -120,6 +127,6 @@ abstract class RequestBuilder
     {
         assert(PHP_INT_SIZE === 8, '64bit PHP required');
 
-        return unpack('Q', pack('d', $value))[1];
+        return current(unpack('Q', pack('d', $value)));
     }
 }
