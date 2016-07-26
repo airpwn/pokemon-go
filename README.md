@@ -75,6 +75,9 @@ If you discover any security related issues, please email info@vi0lation.de inst
 - [FeroxRev](https://github.com/FeroxRev/Pokemon-Go-Rocket-API)
 - [All Contributors][link-contributors]
 
+## See also
+- [NicklasWallgren/PokemonGoAPI-PHP](https://github.com/NicklasWallgren/PokemonGoAPI-PHP)
+
 ## License
 
 The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
