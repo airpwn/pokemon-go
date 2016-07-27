@@ -17,8 +17,8 @@ use DrDelay\PokemonGo\Auth\AuthInterface;
 use DrDelay\PokemonGo\Cache\CacheAwareInterface;
 use DrDelay\PokemonGo\Geography\Coordinate;
 use DrDelay\PokemonGo\Http\ClientAwareInterface;
-use DrDelay\PokemonGo\Http\RequestBuilder;
-use DrDelay\PokemonGo\Http\RequestException;
+use DrDelay\PokemonGo\Request\RequestBuilder;
+use DrDelay\PokemonGo\Request\RequestException;
 use Fig\Cache\Memory\MemoryPool;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Psr7\StreamWrapper;
@@ -214,6 +214,7 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
      * @return ResponseEnvelope
      *
      * @throws AuthException
+     * @throws RequestException
      *
      * @see AuthTicket
      * @see RequestType

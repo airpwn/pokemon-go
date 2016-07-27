@@ -13,6 +13,7 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 
 ### Changed
 - Updated Protobufs dependency
+- Moved Request classes into own namespace
 
 ### Fixed
 - Only resend if the received Api-URL has changed

@@ -10,7 +10,7 @@
  * @author DrDelay <info@vi0lation.de>
  */
 
-namespace DrDelay\PokemonGo\Http;
+namespace DrDelay\PokemonGo\Request;
 
 use DrDelay\PokemonGo\Geography\Coordinate;
 use POGOProtos\Networking\Envelopes\AuthTicket;
