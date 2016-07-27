@@ -18,6 +18,7 @@ use DrDelay\PokemonGo\Cache\CacheAwareInterface;
 use DrDelay\PokemonGo\Geography\Coordinate;
 use DrDelay\PokemonGo\Http\ClientAwareInterface;
 use DrDelay\PokemonGo\Http\RequestBuilder;
+use DrDelay\PokemonGo\Http\RequestException;
 use Fig\Cache\Memory\MemoryPool;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Psr7\StreamWrapper;
@@ -275,6 +276,10 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
             $logger->debug('Resending request');
 
             return $this->sendRequest($requestTypes);
+        }
+
+        if (!$cachedTicket && $responseCode != static::HANDSHAKE_CODE) {
+            throw new RequestException('Did not receive Handshake from server');
         }
 
         return $responseEnv;
