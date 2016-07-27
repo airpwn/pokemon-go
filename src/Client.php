@@ -17,6 +17,8 @@ use DrDelay\PokemonGo\Auth\AuthInterface;
 use DrDelay\PokemonGo\Cache\CacheAwareInterface;
 use DrDelay\PokemonGo\Geography\Coordinate;
 use DrDelay\PokemonGo\Http\ClientAwareInterface;
+use DrDelay\PokemonGo\Request\ApiRequestInterface;
+use DrDelay\PokemonGo\Request\ApiRequests\GetPlayerRequest;
 use DrDelay\PokemonGo\Request\RequestBuilder;
 use DrDelay\PokemonGo\Request\RequestException;
 use Fig\Cache\Memory\MemoryPool;
@@ -27,7 +29,6 @@ use League\Container\Container;
 use League\Container\Exception\NotFoundException as AliasNotFound;
 use POGOProtos\Networking\Envelopes\AuthTicket;
 use POGOProtos\Networking\Envelopes\ResponseEnvelope;
-use POGOProtos\Networking\Requests\RequestType;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
@@ -201,15 +202,28 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
      */
     protected function initialize()
     {
-        $this->sendRequest([RequestType::GET_PLAYER]);
+        $this->sendRequest(GetPlayerRequest::factory());
 
-        // TODO: Process response
+        // TODO: Fix: new \POGOProtos\Data\PlayerData did not read the full length. Possibly fixed with the read_bytes issue
+        // TODO: Process GetPlayer-response
+    }
+
+    /**
+     * Send a request given by an ApiRequestInterface.
+     *
+     * @param ApiRequestInterface $request
+     *
+     * @return \ProtobufMessage
+     */
+    public function sendRequest(ApiRequestInterface $request):\ProtobufMessage
+    {
+        return $request->getResponse($this->sendRequestRaw([$request->getRequestType()]));
     }
 
     /**
      * Sends a request, saves a possibly returned AuthTicket and endpoint.
      *
-     * @param array $requestTypes An array of RequestType consts or Request objects
+     * @param array $requestTypes An array of \POGOProtos\Networking\Requests\RequestType consts or \POGOProtos\Networking\Requests\Request objects
      *
      * @return ResponseEnvelope
      *
@@ -217,10 +231,10 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
      * @throws RequestException
      *
      * @see AuthTicket
-     * @see RequestType
-     * @see Request
+     * @see \POGOProtos\Networking\Requests\RequestType
+     * @see \POGOProtos\Networking\Requests\Request
      */
-    public function sendRequest(array $requestTypes):ResponseEnvelope
+    public function sendRequestRaw(array $requestTypes):ResponseEnvelope
     {
         /** @var CacheItemPoolInterface $cache */
         $cache = $this->container->get(CacheItemPoolInterface::class);
@@ -252,7 +266,7 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
             $logger->warning('Received Auth error, trying to obtain a new AuthTicket');
             $cache->deleteItem($this->authTicketCacheKey);
 
-            return $this->sendRequest($requestTypes);
+            return $this->sendRequestRaw($requestTypes);
         }
 
         if ($responseCode == static::UNKNOWN_CODE) {
@@ -283,7 +297,7 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
         if ($resend || $responseCode == static::HANDSHAKE_CODE) {
             $logger->debug('Resending request');
 
-            return $this->sendRequest($requestTypes);
+            return $this->sendRequestRaw($requestTypes);
         }
 
         if (!$cachedTicket && $responseCode != static::HANDSHAKE_CODE) {

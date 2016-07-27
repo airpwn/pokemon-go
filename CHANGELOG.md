@@ -10,10 +10,13 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 - Try to obtain a new AuthTicket if an AuthError occurs using a cached one
 - Check for handshake if an initial request is done
 - Check for unknown response status code
+- Api Requests as own classes being passed to new Client->sendRequest
+- GetPlayerRequest
 
 ### Changed
 - Updated Protobufs dependency
 - Moved Request classes into own namespace
+- Renamed Client->sendRequest to sendRequestRaw
 
 ### Fixed
 - Only resend if the received Api-URL has changed

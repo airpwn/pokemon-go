@@ -37,8 +37,15 @@ $client = (new \DrDelay\PokemonGo\Client())
 $client->setLocation(...); // A \DrDelay\PokemonGo\Geography\Coordinate
 $client->login();
 
-// More to come
+$playerRequest = \DrDelay\PokemonGo\Request\ApiRequests\GetPlayerRequest::factory();
+$playerResponse = $client->sendRequest($playerRequest); // Define own requests by implementing \DrDelay\PokemonGo\Request\ApiRequestInterface / extending \DrDelay\PokemonGo\Request\AbstractApiRequest
 ```
+
+## Issues of this dev branch
+
+- Protobufs: read_bytes len = 0
+- Protobufs: Enum namespace not qualified -> Fatal error
+- Protobufs: did not read the full length
 
 ## Google login
 

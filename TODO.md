@@ -5,5 +5,5 @@
 - [x] Cache expires time
 - [ ] Fix Location as Ulongs?
 - [x] Use AuthTicket for subsequent requests
-- [ ] Implement basic Api calls: Save GET_PLAYER Response (Generate new Proto files?)
-- [ ] Fix protocolbuffers read_bytes error
+- [ ] Save initial response / return it (from login)
+- [ ] Fix protocolbuffers read_bytes error (+ did not read the full length)

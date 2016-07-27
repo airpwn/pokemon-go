@@ -31,11 +31,11 @@ abstract class RequestBuilder
      * @param string     $accessToken
      * @param string     $authType
      * @param Coordinate $location
-     * @param array      $requestTypes An array of RequestType consts or Request objects
+     * @param array      $requestTypes An array of \POGOProtos\Networking\Requests\RequestType consts or Request objects
      *
      * @return RequestEnvelope
      *
-     * @see RequestType
+     * @see \POGOProtos\Networking\Requests\RequestType
      * @see Request
      */
     public static function getInitialRequest(string $accessToken, string $authType, Coordinate $location, array $requestTypes):RequestEnvelope
@@ -55,11 +55,11 @@ abstract class RequestBuilder
      *
      * @param AuthTicket $authTicket
      * @param Coordinate $location
-     * @param array      $requestTypes An array of RequestType consts or Request objects
+     * @param array      $requestTypes An array of \POGOProtos\Networking\Requests\RequestType consts or Request objects
      *
      * @return RequestEnvelope
      *
-     * @see RequestType
+     * @see \POGOProtos\Networking\Requests\RequestType
      * @see Request
      */
     public static function getRequest(AuthTicket $authTicket, Coordinate $location, array $requestTypes):RequestEnvelope
@@ -72,11 +72,11 @@ abstract class RequestBuilder
      *
      * @param RequestEnvelope_AuthInfo|AuthTicket $auth
      * @param Coordinate                          $location
-     * @param array                               $requestTypes An array of RequestType consts or Request objects
+     * @param array                               $requestTypes An array of \POGOProtos\Networking\Requests\RequestType consts or Request objects
      *
      * @return RequestEnvelope
      *
-     * @see RequestType
+     * @see \POGOProtos\Networking\Requests\RequestType
      * @see Request
      */
     protected static function _request($auth, Coordinate $location, array $requestTypes):RequestEnvelope
