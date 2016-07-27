@@ -40,6 +40,7 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
 
     const AUTH_ERROR_CODE = 102;
     const HANDSHAKE_CODE = 53;
+    const UNKNOWN_CODE = 52;
 
     /** @var Container */
     protected $container;
@@ -251,6 +252,10 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
             $cache->deleteItem($this->authTicketCacheKey);
 
             return $this->sendRequest($requestTypes);
+        }
+
+        if ($responseCode == static::UNKNOWN_CODE) {
+            throw new RequestException('Server responded with "unknown" status code '.static::UNKNOWN_CODE);
         }
         $resend = false;
 

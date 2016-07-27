@@ -9,6 +9,7 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 ### Added
 - Try to obtain a new AuthTicket if an AuthError occurs using a cached one
 - Check for handshake if an initial request is done
+- Check for unknown response status code
 
 ## 2016-07-26 #1
 
