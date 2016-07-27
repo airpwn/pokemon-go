@@ -226,7 +226,8 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
 
         $authTicketCacheItem = $cache->getItem($this->authTicketCacheKey);
         $requestEnvelope = null;
-        if ($authTicketCacheItem->isHit()) {
+        $cachedTicket = $authTicketCacheItem->isHit();
+        if ($cachedTicket) {
             $logger->debug('Auth ticket exists');
             $requestEnvelope = RequestBuilder::getRequest($authTicketCacheItem->get(), $this->location, $requestTypes);
         } else {
@@ -242,7 +243,13 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
         $responseCode = $requestEnvelope->getStatusCode();
 
         if ($responseCode == static::AUTH_ERROR_CODE) {
-            throw new AuthException('Received AUTH_ERROR_CODE');
+            if (!$cachedTicket) {
+                throw new AuthException('Received AUTH_ERROR_CODE in initial request');
+            }
+            $logger->warning('Received Auth error, trying to obtain a new AuthTicket');
+            $cache->deleteItem($this->authTicketCacheKey);
+
+            return $this->sendRequest($requestTypes);
         }
         $resend = false;
 
