@@ -44,7 +44,6 @@ $playerResponse = $client->sendRequest($playerRequest); // Define own requests b
 ## Issues of this dev branch
 
 - Protobufs: read_bytes len = 0
-- Protobufs: Enum namespace not qualified -> Fatal error
 - Protobufs: did not read the full length
 
 ## Google login

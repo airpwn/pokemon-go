@@ -4,6 +4,11 @@ All Notable changes to `pokemon-go` will be documented in this file.
 
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
+## 2016-07-27 #2
+
+### Changed
+- Updated Protobufs dependency (fixes Enum namespace problem)
+
 ## 2016-07-27 #1
 
 ### Added
