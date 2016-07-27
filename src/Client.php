@@ -263,8 +263,10 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
         if ($apiUrl) {
             $apiUrl = sprintf('https://%s/rpc', $apiUrl);
             $logger->info('Received Api URL '.$apiUrl);
-            $this->endpoint = $apiUrl;
-            $resend = true;
+            if ($apiUrl != $this->endpoint) {
+                $this->endpoint = $apiUrl;
+                $resend = true;
+            }
         }
 
         /** @var AuthTicket|null $authTicket */

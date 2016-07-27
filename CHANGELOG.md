@@ -11,6 +11,12 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 - Check for handshake if an initial request is done
 - Check for unknown response status code
 
+### Changed
+- Updated Protobufs dependency
+
+### Fixed
+- Only resend if the received Api-URL has changed
+
 ## 2016-07-26 #1
 
 ### Added
