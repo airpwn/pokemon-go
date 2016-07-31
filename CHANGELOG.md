@@ -9,6 +9,7 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 ### Added
 - Save Endpoint with AuthTicket
 - Randomized RpcId
+- Returns initial response (PlayerData)
 
 ### Fixed
 - Response-Code-Check: No longer checking code of the request

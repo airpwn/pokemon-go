@@ -16,6 +16,9 @@ use DrDelay\PokemonGo\Request\AbstractApiRequest;
 use POGOProtos\Networking\Requests\RequestType;
 use POGOProtos\Networking\Responses\GetPlayerResponse;
 
+/**
+ * @method GetPlayerResponse getResponse(\POGOProtos\Networking\Envelopes\ResponseEnvelope $responseEnvelope)
+ */
 class GetPlayerRequest extends AbstractApiRequest
 {
     public static function factory():GetPlayerRequest

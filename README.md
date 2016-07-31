@@ -35,10 +35,10 @@ $client = (new \DrDelay\PokemonGo\Client())
     ->setLogger(...); // Optional, any PSR-3 compliant logger
 
 $client->setLocation(...); // A \DrDelay\PokemonGo\Geography\Coordinate
-$client->login();
+$playerData = $client->login(); // Returns an instance of \POGOProtos\Data\PlayerData
 
-$playerRequest = \DrDelay\PokemonGo\Request\ApiRequests\GetPlayerRequest::factory();
-$playerResponse = $client->sendRequest($playerRequest); // Define own requests by implementing \DrDelay\PokemonGo\Request\ApiRequestInterface / extending \DrDelay\PokemonGo\Request\AbstractApiRequest
+$response = $client->sendRequest(...); // Define own requests by implementing \DrDelay\PokemonGo\Request\ApiRequestInterface / extending \DrDelay\PokemonGo\Request\AbstractApiRequest
+// See \DrDelay\PokemonGo\Request\ApiRequests\GetPlayerRequest as an example
 ```
 
 ## Issues of this dev branch

@@ -28,6 +28,7 @@ use GuzzleHttp\Psr7\StreamWrapper;
 use League\Container\Argument\RawArgument;
 use League\Container\Container;
 use League\Container\Exception\NotFoundException as AliasNotFound;
+use POGOProtos\Data\PlayerData;
 use POGOProtos\Networking\Envelopes\AuthTicket;
 use POGOProtos\Networking\Envelopes\ResponseEnvelope;
 use Psr\Cache\CacheItemPoolInterface;
@@ -133,8 +134,10 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
 
     /**
      * Perform the login.
+     *
+     * @return PlayerData
      */
-    public function login()
+    public function login():PlayerData
     {
         /** @var AuthInterface $auth */
         $auth = null;
@@ -169,9 +172,11 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
 
         $logger->notice('Using AccessToken '.$this->accessToken);
 
-        $this->initialize();
+        $playerData = $this->initialize();
 
-        $logger->notice('Login completed');
+        $logger->notice('Login completed. Logged in as '.$playerData->getUsername());
+
+        return $playerData;
     }
 
     /**
@@ -204,13 +209,21 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
 
     /**
      * Initial communication with the API.
+     *
+     * @return PlayerData
+     *
+     * @throws RequestException If the request does not succeed
      */
-    protected function initialize()
+    protected function initialize():PlayerData
     {
-        $this->sendRequest(GetPlayerRequest::factory());
+        /** @var \POGOProtos\Networking\Responses\GetPlayerResponse $player */
+        $player = $this->sendRequest(GetPlayerRequest::factory());
 
-        // TODO: Fix: new \POGOProtos\Data\PlayerData did not read the full length. Possibly fixed with the read_bytes issue
-        // TODO: Process GetPlayer-response
+        if (!$player->getSuccess()) {
+            throw new RequestException('Initial player data request failed');
+        }
+
+        return $player->getPlayerData();
     }
 
     /**
