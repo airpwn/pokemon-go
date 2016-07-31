@@ -2,7 +2,10 @@
 
 [![Latest Version on Packagist][ico-version]][link-packagist]
 [![Software License][ico-license]](LICENSE.md)
-[![Total Downloads][ico-downloads]][link-downloads]
+[![Minimum PHP Version](https://img.shields.io/badge/php-%3E%3D%207.0-8892BF.svg)](https://secure.php.net)
+[![Latest Stable Version][ico-githubversion]][link-releases]
+[![Total Downloads][ico-downloads]][link-packagist]
+[![PHP7 Ready](https://img.shields.io/badge/PHP7-ready-green.svg)][link-packagist]
 
 This library aims to provide the tools to communicate with the Pokemon Go API.
 It is still work in progress.
@@ -83,15 +86,20 @@ If you discover any security related issues, please email info@vi0lation.de inst
 - [jaspervdm](https://github.com/jaspervdm)
 - [All Contributors][link-contributors]
 
+## See also
+
+- [NicklasWallgren/PokemonGoAPI-PHP](https://github.com/NicklasWallgren/PokemonGoAPI-PHP)
+
 ## License
 
 The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
 
 [ico-version]: https://img.shields.io/packagist/v/drdelay/pokemon-go.svg?style=flat-square
 [ico-license]: https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square
+[ico-githubversion]: https://poser.pugx.org/drdelay/pokemon-go/v/stable
 [ico-downloads]: https://img.shields.io/packagist/dt/drdelay/pokemon-go.svg?style=flat-square
 
 [link-packagist]: https://packagist.org/packages/drdelay/pokemon-go
-[link-downloads]: https://packagist.org/packages/drdelay/pokemon-go
+[link-releases]: https://github.com/DrDelay/pokemon-go/releases
 [link-author]: https://github.com/DrDelay
 [link-contributors]: ../../contributors

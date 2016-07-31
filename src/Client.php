@@ -15,8 +15,10 @@ namespace DrDelay\PokemonGo;
 use DrDelay\PokemonGo\Auth\AuthException;
 use DrDelay\PokemonGo\Auth\AuthInterface;
 use DrDelay\PokemonGo\Cache\CacheAwareInterface;
+use DrDelay\PokemonGo\Cache\CacheAwareTrait;
 use DrDelay\PokemonGo\Geography\Coordinate;
 use DrDelay\PokemonGo\Http\ClientAwareInterface;
+use DrDelay\PokemonGo\Http\ClientAwareTrait;
 use DrDelay\PokemonGo\Request\ApiRequestInterface;
 use DrDelay\PokemonGo\Request\ApiRequests\GetPlayerRequest;
 use DrDelay\PokemonGo\Request\Endpoint;
@@ -25,7 +27,6 @@ use DrDelay\PokemonGo\Request\RequestException;
 use Fig\Cache\Memory\MemoryPool;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Psr7\StreamWrapper;
-use League\Container\Argument\RawArgument;
 use League\Container\Container;
 use League\Container\Exception\NotFoundException as AliasNotFound;
 use POGOProtos\Data\PlayerData;
@@ -33,11 +34,22 @@ use POGOProtos\Networking\Envelopes\AuthTicket;
 use POGOProtos\Networking\Envelopes\ResponseEnvelope;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
-class Client implements CacheAwareInterface, LoggerAwareInterface
+class Client implements CacheAwareInterface, ClientAwareInterface, LoggerAwareInterface
 {
+    use CacheAwareTrait {
+        setCache as setCacheTrait;
+    }
+    use ClientAwareTrait {
+        setHttpClient as setHttpClientTrait;
+    }
+    use LoggerAwareTrait {
+        setLogger as setLoggerTrait;
+    }
+
     const USER_AGENT = 'Niantic App';
     const AUTH_TICKET_CACHE_NAMESPACE = 'AuthTicket';
     const INITIAL_API_URL = 'https://pgorelease.nianticlabs.com/plfe/rpc';
@@ -71,10 +83,10 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
     {
         $this->container = new Container();
 
-        $this->container->share(LoggerInterface::class, NullLogger::class);
+        $this->setLogger(new NullLogger());
         $this->container->inflector(LoggerAwareInterface::class)->invokeMethod('setLogger', [LoggerInterface::class]);
 
-        $this->container->share(GuzzleClient::class, GuzzleClient::class)->withArgument(new RawArgument([
+        $this->setHttpClient(new GuzzleClient([
             'headers' => [
                 'User-Agent' => static::USER_AGENT,
                 'Connection' => 'keep-alive',
@@ -86,7 +98,7 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
         ]));
         $this->container->inflector(ClientAwareInterface::class)->invokeMethod('setHttpClient', [GuzzleClient::class]);
 
-        $this->container->share(CacheItemPoolInterface::class, MemoryPool::class);
+        $this->setCache(new MemoryPool());
         $this->container->inflector(CacheAwareInterface::class)->invokeMethod('setCache', [CacheItemPoolInterface::class]);
     }
 
@@ -100,8 +112,23 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
     public function setLogger(LoggerInterface $logger):LoggerAwareInterface
     {
         $this->container->share(LoggerInterface::class, $logger);
+        $this->setLoggerTrait($logger);
 
         return $this;
+    }
+
+    /**
+     * Sets a HTTP client.
+     *
+     * @param GuzzleClient $client
+     *
+     * @return Client|ClientAwareInterface|$this
+     */
+    public function setHttpClient(GuzzleClient $client):ClientAwareInterface
+    {
+        $this->container->share(GuzzleClient::class, $client);
+
+        return $this->setHttpClientTrait($client);
     }
 
     /**
@@ -129,7 +156,7 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
     {
         $this->container->share(CacheItemPoolInterface::class, $cache);
 
-        return $this;
+        return $this->setCacheTrait($cache);
     }
 
     /**
@@ -147,21 +174,16 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
             throw new \BadMethodCallException('You need to set an auth mechanism with setAuth', 0, $e);
         }
 
-        /** @var CacheItemPoolInterface $cache */
-        $cache = $this->container->get(CacheItemPoolInterface::class);
-        /** @var LoggerInterface $logger */
-        $logger = $this->container->get(LoggerInterface::class);
-
         $cacheKey = [$auth->getAuthType(), $auth->getUniqueIdentifier()];
-        $item = $cache->getItem(static::cacheKey($cacheKey));
+        $item = $this->cache->getItem(static::cacheKey($cacheKey));
         if ($item->isHit()) {
-            $logger->debug('Login Cache hit');
+            $this->logger->debug('Login Cache hit');
             $this->accessToken = $item->get();
         } else {
-            $logger->info('Cache miss -> Doing login');
+            $this->logger->info('Cache miss -> Doing login');
             $accessToken = $auth->invoke();
             $this->accessToken = $accessToken->getToken();
-            $cache->save($item
+            $this->cache->save($item
                 ->set($this->accessToken)
                 ->expiresAfter($accessToken->getLifetime()));
         }
@@ -170,11 +192,11 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
         $this->authType = $auth->getAuthType();
         $this->authTicketCacheKey = static::cacheKey($cacheKey);
 
-        $logger->notice('Using AccessToken '.$this->accessToken);
+        $this->logger->notice('Using AccessToken '.$this->accessToken);
 
         $playerData = $this->initialize();
 
-        $logger->notice('Login completed. Logged in as '.$playerData->getUsername());
+        $this->logger->notice('Login completed. Logged in as '.$playerData->getUsername());
 
         return $playerData;
     }
@@ -258,17 +280,14 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
             return $this->authTicket;
         }
 
-        /** @var CacheItemPoolInterface $cache */
-        $cache = $this->container->get(CacheItemPoolInterface::class);
-
         if ($forceClear) {
-            $cache->deleteItem($this->authTicketCacheKey);
+            $this->cache->deleteItem($this->authTicketCacheKey);
         }
 
-        $authTicketCacheItem = $cache->getItem($this->authTicketCacheKey);
+        $authTicketCacheItem = $this->cache->getItem($this->authTicketCacheKey);
         if ($modeSet) {
             $this->authTicket = $ticket;
-            $cache->save($authTicketCacheItem
+            $this->cache->save($authTicketCacheItem
                 ->set(new Endpoint($this->endpoint, $this->authTicket))
                 ->expiresAt((new \DateTime())->setTimestamp($this->authTicket->getExpireTimestampMs() / 1000)));
         } else {
@@ -299,24 +318,18 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
      */
     public function sendRequestRaw(array $requestTypes):ResponseEnvelope
     {
-        /** @var LoggerInterface $logger */
-        $logger = $this->container->get(LoggerInterface::class);
-
         $authTicket = $this->authTicket();
         $hasAuthTicket = (bool) $authTicket;
         $requestEnvelope = null;
         if ($hasAuthTicket) {
-            $logger->debug('Auth ticket exists');
+            $this->logger->debug('Auth ticket exists');
             $requestEnvelope = RequestBuilder::getRequest($authTicket, $this->location, $requestTypes);
         } else {
-            $logger->info('No auth ticket, doing initial request');
+            $this->logger->info('No auth ticket, doing initial request');
             $requestEnvelope = RequestBuilder::getInitialRequest($this->accessToken, $this->authType, $this->location, $requestTypes);
         }
 
-        /** @var GuzzleClient $client */
-        $client = $this->container->get(GuzzleClient::class);
-
-        $response = $client->post($this->endpoint, ['body' => $requestEnvelope->toProtobuf()]);
+        $response = $this->client->post($this->endpoint, ['body' => $requestEnvelope->toProtobuf()]);
         $responseEnv = new ResponseEnvelope(StreamWrapper::getResource($response->getBody()));
         $responseCode = $responseEnv->getStatusCode();
 
@@ -325,7 +338,7 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
                 throw new AuthException('Received AUTH_ERROR_CODE in initial request');
             }
 
-            $logger->warning('Received Auth error, trying to obtain a new AuthTicket');
+            $this->logger->warning('Received Auth error, trying to obtain a new AuthTicket');
             $this->authTicket(null, true);
 
             return $this->sendRequestRaw($requestTypes);
@@ -340,7 +353,7 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
         if ($apiUrl) {
             $apiUrl = sprintf('https://%s/rpc', $apiUrl);
             if ($apiUrl != $this->endpoint) {
-                $logger->info('Received new Api URL '.$apiUrl);
+                $this->logger->info('Received new Api URL '.$apiUrl);
                 $this->endpoint = $apiUrl;
                 $resend = true;
             }
@@ -349,13 +362,13 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
         /** @var AuthTicket|null $authTicket */
         $authTicket = $responseEnv->getAuthTicket();
         if ($authTicket) {
-            $logger->info('Received AuthTicket');
+            $this->logger->info('Received AuthTicket');
             $this->authTicket($authTicket);
             $resend = true;
         }
 
         if ($resend || $responseCode == static::HANDSHAKE_CODE) {
-            $logger->debug('Resending request');
+            $this->logger->debug('Resending request');
 
             return $this->sendRequestRaw($requestTypes);
         }

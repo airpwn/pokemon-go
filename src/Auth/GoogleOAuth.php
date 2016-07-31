@@ -73,7 +73,7 @@ class GoogleOAuth extends AbstractAuth implements CacheAwareInterface
             $this->logger->info('Refresh Token in Cache');
         } else {
             if ($this->cache instanceof MemoryPool) {
-                throw new AuthException('A persistent cache implementation is necessary for Google login');
+                throw new \BadMethodCallException('A persistent cache implementation is necessary for Google login');
             }
 
             return $this->obtainRefreshToken($refreshTokenCacheItem);
