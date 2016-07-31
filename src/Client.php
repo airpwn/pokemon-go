@@ -14,19 +14,31 @@ namespace DrDelay\PokemonGo;
 
 use DrDelay\PokemonGo\Auth\AuthInterface;
 use DrDelay\PokemonGo\Cache\CacheAwareInterface;
+use DrDelay\PokemonGo\Cache\CacheAwareTrait;
 use DrDelay\PokemonGo\Http\ClientAwareInterface;
+use DrDelay\PokemonGo\Http\ClientAwareTrait;
 use Fig\Cache\Memory\MemoryPool;
 use GuzzleHttp\Client as GuzzleClient;
-use League\Container\Argument\RawArgument;
 use League\Container\Container;
 use League\Container\Exception\NotFoundException as AliasNotFound;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
-class Client implements CacheAwareInterface, LoggerAwareInterface
+class Client implements CacheAwareInterface, ClientAwareInterface, LoggerAwareInterface
 {
+    use CacheAwareTrait {
+        setCache as setCacheTrait;
+    }
+    use ClientAwareTrait {
+        setHttpClient as setHttpClientTrait;
+    }
+    use LoggerAwareTrait {
+        setLogger as setLoggerTrait;
+    }
+
     const USER_AGENT = 'Niantic App';
 
     /** @var Container */
@@ -39,10 +51,10 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
     {
         $this->container = new Container();
 
-        $this->container->share(LoggerInterface::class, NullLogger::class);
+        $this->setLogger(new NullLogger());
         $this->container->inflector(LoggerAwareInterface::class)->invokeMethod('setLogger', [LoggerInterface::class]);
 
-        $this->container->share(GuzzleClient::class, GuzzleClient::class)->withArgument(new RawArgument([
+        $this->setHttpClient(new GuzzleClient([
             'headers' => [
                 'User-Agent' => static::USER_AGENT,
                 'Connection' => 'keep-alive',
@@ -54,7 +66,7 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
         ]));
         $this->container->inflector(ClientAwareInterface::class)->invokeMethod('setHttpClient', [GuzzleClient::class]);
 
-        $this->container->share(CacheItemPoolInterface::class, MemoryPool::class);
+        $this->setCache(new MemoryPool());
         $this->container->inflector(CacheAwareInterface::class)->invokeMethod('setCache', [CacheItemPoolInterface::class]);
     }
 
@@ -68,8 +80,23 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
     public function setLogger(LoggerInterface $logger):LoggerAwareInterface
     {
         $this->container->share(LoggerInterface::class, $logger);
+        $this->setLoggerTrait($logger);
 
         return $this;
+    }
+
+    /**
+     * Sets a HTTP client.
+     *
+     * @param GuzzleClient $client
+     *
+     * @return Client|ClientAwareInterface|$this
+     */
+    public function setHttpClient(GuzzleClient $client):ClientAwareInterface
+    {
+        $this->container->share(GuzzleClient::class, $client);
+
+        return $this->setHttpClientTrait($client);
     }
 
     /**
@@ -97,7 +124,7 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
     {
         $this->container->share(CacheItemPoolInterface::class, $cache);
 
-        return $this;
+        return $this->setCacheTrait($cache);
     }
 
     /**
@@ -113,25 +140,20 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
             throw new \BadMethodCallException('You need to set an auth mechanism with setAuth', 0, $e);
         }
 
-        /** @var CacheItemPoolInterface $cache */
-        $cache = $this->container->get(CacheItemPoolInterface::class);
-        /** @var LoggerInterface $logger */
-        $logger = $this->container->get(LoggerInterface::class);
-
-        $item = $cache->getItem(static::cacheKey([$auth->getAuthType(), $auth->getUniqueIdentifier()]));
+        $item = $this->cache->getItem(static::cacheKey([$auth->getAuthType(), $auth->getUniqueIdentifier()]));
         if ($item->isHit()) {
-            $logger->debug('Login Cache hit');
+            $this->logger->debug('Login Cache hit');
             $this->accessToken = $item->get();
         } else {
-            $logger->info('Cache miss -> Doing login');
+            $this->logger->info('Cache miss -> Doing login');
             $accessToken = $auth->invoke();
             $this->accessToken = $accessToken->getToken();
-            $cache->save($item
+            $this->cache->save($item
                 ->set($this->accessToken)
                 ->expiresAfter($accessToken->getLifetime()));
         }
 
-        $logger->notice('Using AccessToken '.$this->accessToken);
+        $this->logger->notice('Using AccessToken '.$this->accessToken);
     }
 
     /**
