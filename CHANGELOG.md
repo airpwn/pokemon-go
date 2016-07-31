@@ -13,6 +13,7 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 
 ### Changed
 - Location is now optional
+- Supports multiple requests/responses in a single envelope
 
 ### Fixed
 - Response-Code-Check: No longer checking code of the request

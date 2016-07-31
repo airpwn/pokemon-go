@@ -16,28 +16,46 @@ use POGOProtos\Networking\Envelopes\ResponseEnvelope;
 
 class AbstractApiRequest implements ApiRequestInterface
 {
-    /** @var int|\POGOProtos\Networking\Requests\Request */
-    protected $request;
+    /** @var array */
+    protected $requests;
 
-    /** @var \ProtobufMessage */
-    protected $responsePrototype;
+    /** @var array|\ProtobufMessage[] */
+    protected $responsePrototypes;
 
-    public function __construct($requestType, \ProtobufMessage $responsePrototype)
+    public function __construct(array $requestTypes, array $responsePrototypes)
     {
-        $this->request = $requestType;
-        $this->responsePrototype = $responsePrototype;
+        $this->requests = $requestTypes;
+        $this->responsePrototypes = $responsePrototypes;
     }
 
-    public function getRequestType()
+    /**
+     * Get a single request.
+     *
+     * @param int|\POGOProtos\Networking\Requests\Request $requestType       A \POGOProtos\Networking\Requests\RequestType const or \POGOProtos\Networking\Requests\Request object
+     * @param \ProtobufMessage                            $responsePrototype
+     *
+     * @return AbstractApiRequest|static
+     */
+    public static function getSingle($requestType, \ProtobufMessage $responsePrototype):AbstractApiRequest
     {
-        return $this->request;
+        return new static([$requestType], [$responsePrototype]);
     }
 
-    public function getResponse(ResponseEnvelope $responseEnvelope):\ProtobufMessage
+    public function getRequestTypes():array
     {
-        $response = clone $this->responsePrototype;
-        $response->read(current($responseEnvelope->getReturnsArray()));
+        return $this->requests;
+    }
 
-        return $response;
+    public function getResponses(ResponseEnvelope $responseEnvelope):array
+    {
+        $responses = [];
+        $returnsCount = $responseEnvelope->getReturnsCount();
+        for ($i = 0; $i < $returnsCount; ++$i) {
+            $response = clone $this->responsePrototypes[$i];
+            $response->read($responseEnvelope->getReturns($i));
+            $responses[] = $response;
+        }
+
+        return $responses;
     }
 }

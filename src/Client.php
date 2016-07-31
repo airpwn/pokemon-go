@@ -239,7 +239,7 @@ class Client implements CacheAwareInterface, ClientAwareInterface, LoggerAwareIn
     protected function initialize():PlayerData
     {
         /** @var \POGOProtos\Networking\Responses\GetPlayerResponse $player */
-        $player = $this->sendRequest(GetPlayerRequest::factory());
+        $player = current($this->sendRequest(GetPlayerRequest::factory()));
 
         if (!$player->getSuccess()) {
             throw new RequestException('Initial player data request failed');
@@ -253,11 +253,11 @@ class Client implements CacheAwareInterface, ClientAwareInterface, LoggerAwareIn
      *
      * @param ApiRequestInterface $request
      *
-     * @return \ProtobufMessage
+     * @return array|\ProtobufMessage[]
      */
-    public function sendRequest(ApiRequestInterface $request):\ProtobufMessage
+    public function sendRequest(ApiRequestInterface $request):array
     {
-        return $request->getResponse($this->sendRequestRaw([$request->getRequestType()]));
+        return $request->getResponses($this->sendRequestRaw($request->getRequestTypes()));
     }
 
     /**

@@ -19,27 +19,27 @@ interface ApiRequestInterface
     /**
      * ApiRequestInterface constructor.
      *
-     * @param int|\POGOProtos\Networking\Requests\Request $requestType       A \POGOProtos\Networking\Requests\RequestType const or \POGOProtos\Networking\Requests\Request object
-     * @param \ProtobufMessage                            $responsePrototype
+     * @param array                    $requestTypes       An array of \POGOProtos\Networking\Requests\RequestType consts or \POGOProtos\Networking\Requests\Request objects
+     * @param array|\ProtobufMessage[] $responsePrototypes
      *
      * @see \POGOProtos\Networking\Requests\RequestType
      * @see \POGOProtos\Networking\Requests\Request
      */
-    public function __construct($requestType, \ProtobufMessage $responsePrototype);
+    public function __construct(array $requestTypes, array $responsePrototypes);
 
     /**
-     * Get the request type.
+     * Get the request types.
      *
-     * @return int|\POGOProtos\Networking\Requests\Request
+     * @return array An array of \POGOProtos\Networking\Requests\RequestType consts or \POGOProtos\Networking\Requests\Request objects
      */
-    public function getRequestType();
+    public function getRequestTypes():array;
 
     /**
-     * Get the Protobuf message of this request's response.
+     * Get the Protobuf messages of this request's response.
      *
      * @param ResponseEnvelope $response
      *
-     * @return \ProtobufMessage
+     * @return array|\ProtobufMessage[]
      */
-    public function getResponse(ResponseEnvelope $response):\ProtobufMessage;
+    public function getResponses(ResponseEnvelope $response):array;
 }

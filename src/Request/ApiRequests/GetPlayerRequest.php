@@ -17,12 +17,17 @@ use POGOProtos\Networking\Requests\RequestType;
 use POGOProtos\Networking\Responses\GetPlayerResponse;
 
 /**
- * @method GetPlayerResponse getResponse(\POGOProtos\Networking\Envelopes\ResponseEnvelope $responseEnvelope)
+ * @method array|GetPlayerResponse[] getResponse(\POGOProtos\Networking\Envelopes\ResponseEnvelope $responseEnvelope)
  */
 class GetPlayerRequest extends AbstractApiRequest
 {
+    /**
+     * Constructs a GetPlayerRequest.
+     *
+     * @return GetPlayerRequest
+     */
     public static function factory():GetPlayerRequest
     {
-        return new static(RequestType::GET_PLAYER, new GetPlayerResponse());
+        return parent::getSingle(RequestType::GET_PLAYER, new GetPlayerResponse());
     }
 }

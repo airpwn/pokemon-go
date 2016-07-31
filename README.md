@@ -41,7 +41,7 @@ $client->setLocation(...); // A \DrDelay\PokemonGo\Geography\Coordinate , option
 $playerData = $client->login(); // Returns an instance of \POGOProtos\Data\PlayerData
 
 $response = $client->sendRequest(...); // Define own requests by implementing \DrDelay\PokemonGo\Request\ApiRequestInterface / extending \DrDelay\PokemonGo\Request\AbstractApiRequest
-// See \DrDelay\PokemonGo\Request\ApiRequests\GetPlayerRequest as an example
+// See \DrDelay\PokemonGo\Request\ApiRequests\GetPlayerRequest/ExampleMultiRequest as examples
 ```
 
 ## Issues of this dev branch
