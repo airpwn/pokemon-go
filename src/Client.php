@@ -19,6 +19,7 @@ use DrDelay\PokemonGo\Geography\Coordinate;
 use DrDelay\PokemonGo\Http\ClientAwareInterface;
 use DrDelay\PokemonGo\Request\ApiRequestInterface;
 use DrDelay\PokemonGo\Request\ApiRequests\GetPlayerRequest;
+use DrDelay\PokemonGo\Request\Endpoint;
 use DrDelay\PokemonGo\Request\RequestBuilder;
 use DrDelay\PokemonGo\Request\RequestException;
 use Fig\Cache\Memory\MemoryPool;
@@ -38,6 +39,7 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
 {
     const USER_AGENT = 'Niantic App';
     const AUTH_TICKET_CACHE_NAMESPACE = 'AuthTicket';
+    const INITIAL_API_URL = 'https://pgorelease.nianticlabs.com/plfe/rpc';
 
     const AUTH_ERROR_CODE = 102;
     const HANDSHAKE_CODE = 53;
@@ -59,7 +61,10 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
     protected $authTicketCacheKey;
 
     /** @var string */
-    protected $endpoint = 'https://pgorelease.nianticlabs.com/plfe/rpc';
+    protected $endpoint = self::INITIAL_API_URL;
+
+    /** @var AuthTicket|null */
+    protected $authTicket;
 
     public function __construct()
     {
@@ -221,6 +226,51 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
     }
 
     /**
+     * Get/Set the AuthTicket (Uses cache).
+     *
+     * @param AuthTicket|null $ticket
+     * @param bool|false      $forceClear Clear the ticket
+     *
+     * @return AuthTicket|null
+     */
+    public function authTicket(AuthTicket $ticket = null, bool $forceClear = false)
+    {
+        if ($forceClear) {
+            $this->authTicket = null;
+            $this->endpoint = static::INITIAL_API_URL;
+        }
+
+        $modeSet = (bool) $ticket;
+        if (!$modeSet && $this->authTicket) {
+            return $this->authTicket;
+        }
+
+        /** @var CacheItemPoolInterface $cache */
+        $cache = $this->container->get(CacheItemPoolInterface::class);
+
+        if ($forceClear) {
+            $cache->deleteItem($this->authTicketCacheKey);
+        }
+
+        $authTicketCacheItem = $cache->getItem($this->authTicketCacheKey);
+        if ($modeSet) {
+            $this->authTicket = $ticket;
+            $cache->save($authTicketCacheItem
+                ->set(new Endpoint($this->endpoint, $this->authTicket))
+                ->expiresAt((new \DateTime())->setTimestamp($this->authTicket->getExpireTimestampMs() / 1000)));
+        } else {
+            /** @var Endpoint $endpoint */
+            $endpoint = $authTicketCacheItem->get();
+            if ($endpoint) {
+                $this->authTicket = $endpoint->getAuthTicket();
+                $this->endpoint = $endpoint->getApiUrl();
+            }
+        }
+
+        return $this->authTicket;
+    }
+
+    /**
      * Sends a request, saves a possibly returned AuthTicket and endpoint.
      *
      * @param array $requestTypes An array of \POGOProtos\Networking\Requests\RequestType consts or \POGOProtos\Networking\Requests\Request objects
@@ -236,17 +286,15 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
      */
     public function sendRequestRaw(array $requestTypes):ResponseEnvelope
     {
-        /** @var CacheItemPoolInterface $cache */
-        $cache = $this->container->get(CacheItemPoolInterface::class);
         /** @var LoggerInterface $logger */
         $logger = $this->container->get(LoggerInterface::class);
 
-        $authTicketCacheItem = $cache->getItem($this->authTicketCacheKey);
+        $authTicket = $this->authTicket();
+        $hasAuthTicket = (bool) $authTicket;
         $requestEnvelope = null;
-        $cachedTicket = $authTicketCacheItem->isHit();
-        if ($cachedTicket) {
+        if ($hasAuthTicket) {
             $logger->debug('Auth ticket exists');
-            $requestEnvelope = RequestBuilder::getRequest($authTicketCacheItem->get(), $this->location, $requestTypes);
+            $requestEnvelope = RequestBuilder::getRequest($authTicket, $this->location, $requestTypes);
         } else {
             $logger->info('No auth ticket, doing initial request');
             $requestEnvelope = RequestBuilder::getInitialRequest($this->accessToken, $this->authType, $this->location, $requestTypes);
@@ -257,14 +305,15 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
 
         $response = $client->post($this->endpoint, ['body' => $requestEnvelope->toProtobuf()]);
         $responseEnv = new ResponseEnvelope(StreamWrapper::getResource($response->getBody()));
-        $responseCode = $requestEnvelope->getStatusCode();
+        $responseCode = $responseEnv->getStatusCode();
 
         if ($responseCode == static::AUTH_ERROR_CODE) {
-            if (!$cachedTicket) {
+            if (!$hasAuthTicket) {
                 throw new AuthException('Received AUTH_ERROR_CODE in initial request');
             }
+
             $logger->warning('Received Auth error, trying to obtain a new AuthTicket');
-            $cache->deleteItem($this->authTicketCacheKey);
+            $this->authTicket(null, true);
 
             return $this->sendRequestRaw($requestTypes);
         }
@@ -277,8 +326,8 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
         $apiUrl = $responseEnv->getApiUrl();
         if ($apiUrl) {
             $apiUrl = sprintf('https://%s/rpc', $apiUrl);
-            $logger->info('Received Api URL '.$apiUrl);
             if ($apiUrl != $this->endpoint) {
+                $logger->info('Received new Api URL '.$apiUrl);
                 $this->endpoint = $apiUrl;
                 $resend = true;
             }
@@ -288,9 +337,7 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
         $authTicket = $responseEnv->getAuthTicket();
         if ($authTicket) {
             $logger->info('Received AuthTicket');
-            $cache->save($authTicketCacheItem
-                ->set($authTicket)
-                ->expiresAt((new \DateTime())->setTimestamp($authTicket->getExpireTimestampMs() / 1000)));
+            $this->authTicket($authTicket);
             $resend = true;
         }
 
@@ -300,7 +347,7 @@ class Client implements CacheAwareInterface, LoggerAwareInterface
             return $this->sendRequestRaw($requestTypes);
         }
 
-        if (!$cachedTicket && $responseCode != static::HANDSHAKE_CODE) {
+        if (!$hasAuthTicket && $responseCode != static::HANDSHAKE_CODE) {
             throw new RequestException('Did not receive Handshake from server');
         }
 

@@ -21,9 +21,12 @@ use POGOProtos\Networking\Requests\Request;
 
 abstract class RequestBuilder
 {
-    // TODO: Random?
-    const RPC_ID = 1469378659230941192;
+    const RPC_MIN = 1100000000000000000;
+    const RPC_MAX = 1490000000000000000;
     const REQUEST_CODE = 2;
+
+    /** @var int|null */
+    protected static $rpcId;
 
     /**
      * Request generation by token and type (Initial).
@@ -81,6 +84,12 @@ abstract class RequestBuilder
      */
     protected static function _request($auth, Coordinate $location, array $requestTypes):RequestEnvelope
     {
+        if (static::$rpcId) {
+            static::$rpcId++;
+        } else {
+            static::$rpcId = random_int(static::RPC_MIN, static::RPC_MAX);
+        }
+
         $env = new RequestEnvelope();
         if ($auth instanceof RequestEnvelope_AuthInfo) {
             $env->setAuthInfo($auth);
@@ -91,7 +100,7 @@ abstract class RequestBuilder
         }
 
         $env->setStatusCode(static::REQUEST_CODE);
-        $env->setRequestId(static::RPC_ID);
+        $env->setRequestId(static::$rpcId);
 
         // Most likely wrong format. Other APIs send it convert to a Ulong
         $env->setLatitude($location->getLatitude());

@@ -4,6 +4,15 @@ All Notable changes to `pokemon-go` will be documented in this file.
 
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
+## 2016-07-31
+
+### Added
+- Save Endpoint with AuthTicket
+- Randomized RpcId
+
+### Fixed
+- Response-Code-Check: No longer checking code of the request
+
 ## 2016-07-27 #2
 
 ### Changed
