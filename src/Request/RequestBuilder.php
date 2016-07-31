@@ -31,17 +31,17 @@ abstract class RequestBuilder
     /**
      * Request generation by token and type (Initial).
      *
-     * @param string     $accessToken
-     * @param string     $authType
-     * @param Coordinate $location
-     * @param array      $requestTypes An array of \POGOProtos\Networking\Requests\RequestType consts or Request objects
+     * @param string          $accessToken
+     * @param string          $authType
+     * @param Coordinate|null $location
+     * @param array           $requestTypes An array of \POGOProtos\Networking\Requests\RequestType consts or Request objects
      *
      * @return RequestEnvelope
      *
      * @see \POGOProtos\Networking\Requests\RequestType
      * @see Request
      */
-    public static function getInitialRequest(string $accessToken, string $authType, Coordinate $location, array $requestTypes):RequestEnvelope
+    public static function getInitialRequest(string $accessToken, string $authType, Coordinate $location = null, array $requestTypes):RequestEnvelope
     {
         $auth = new RequestEnvelope_AuthInfo();
         $auth->setProvider($authType);
@@ -56,16 +56,16 @@ abstract class RequestBuilder
     /**
      * Request generation by AuthTicket.
      *
-     * @param AuthTicket $authTicket
-     * @param Coordinate $location
-     * @param array      $requestTypes An array of \POGOProtos\Networking\Requests\RequestType consts or Request objects
+     * @param AuthTicket      $authTicket
+     * @param Coordinate|null $location
+     * @param array           $requestTypes An array of \POGOProtos\Networking\Requests\RequestType consts or Request objects
      *
      * @return RequestEnvelope
      *
      * @see \POGOProtos\Networking\Requests\RequestType
      * @see Request
      */
-    public static function getRequest(AuthTicket $authTicket, Coordinate $location, array $requestTypes):RequestEnvelope
+    public static function getRequest(AuthTicket $authTicket, Coordinate $location = null, array $requestTypes):RequestEnvelope
     {
         return static::_request($authTicket, $location, $requestTypes);
     }
@@ -74,7 +74,7 @@ abstract class RequestBuilder
      * Generic request generation.
      *
      * @param RequestEnvelope_AuthInfo|AuthTicket $auth
-     * @param Coordinate                          $location
+     * @param Coordinate|null                     $location
      * @param array                               $requestTypes An array of \POGOProtos\Networking\Requests\RequestType consts or Request objects
      *
      * @return RequestEnvelope
@@ -82,7 +82,7 @@ abstract class RequestBuilder
      * @see \POGOProtos\Networking\Requests\RequestType
      * @see Request
      */
-    protected static function _request($auth, Coordinate $location, array $requestTypes):RequestEnvelope
+    protected static function _request($auth, Coordinate $location = null, array $requestTypes):RequestEnvelope
     {
         if (static::$rpcId) {
             static::$rpcId++;
@@ -102,10 +102,12 @@ abstract class RequestBuilder
         $env->setStatusCode(static::REQUEST_CODE);
         $env->setRequestId(static::$rpcId);
 
-        // Most likely wrong format. Other APIs send it convert to a Ulong
-        $env->setLatitude($location->getLatitude());
-        $env->setLongitude($location->getLongitude());
-        $env->setAltitude($location->getAltitude());
+        if ($location) {
+            // Most likely wrong format. Other APIs send it convert to a Ulong
+            $env->setLatitude($location->getLatitude());
+            $env->setLongitude($location->getLongitude());
+            $env->setAltitude($location->getAltitude());
+        }
 
         $env->setUnknown12(989);
 

@@ -37,7 +37,7 @@ $client = (new \DrDelay\PokemonGo\Client())
     ->setAuth($auth) // Anything implementing \DrDelay\PokemonGo\Auth\AuthInterface
     ->setLogger(...); // Optional, any PSR-3 compliant logger
 
-$client->setLocation(...); // A \DrDelay\PokemonGo\Geography\Coordinate
+$client->setLocation(...); // A \DrDelay\PokemonGo\Geography\Coordinate , optional
 $playerData = $client->login(); // Returns an instance of \POGOProtos\Data\PlayerData
 
 $response = $client->sendRequest(...); // Define own requests by implementing \DrDelay\PokemonGo\Request\ApiRequestInterface / extending \DrDelay\PokemonGo\Request\AbstractApiRequest

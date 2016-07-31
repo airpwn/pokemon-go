@@ -11,6 +11,9 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 - Randomized RpcId
 - Returns initial response (PlayerData)
 
+### Changed
+- Location is now optional
+
 ### Fixed
 - Response-Code-Check: No longer checking code of the request
 

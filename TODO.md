@@ -5,6 +5,6 @@
 - [x] Cache expires time
 - [ ] Fix Location as Ulongs?
 - [x] Use AuthTicket for subsequent requests
-- [ ] Save initial response / return it (from login)
+- [x] Save initial response / return it (from login)
 - [ ] Fix protocolbuffers read_bytes error (jaspervdm/pogoprotos-php#4)
 - [ ] Fix "did not read the full length" error
