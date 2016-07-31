@@ -44,10 +44,10 @@ $response = $client->sendRequest(...); // Define own requests by implementing \D
 // See \DrDelay\PokemonGo\Request\ApiRequests\GetPlayerRequest/ExampleMultiRequest as examples
 ```
 
-## Issues of this dev branch
+## Known issues of this alpha
 
-- Protobufs: read_bytes len = 0
-- Protobufs: did not read the full length
+- Protobufs: read_bytes len = 0 (See [jaspervdm/pogoprotos-php#4](https://github.com/jaspervdm/pogoprotos-php/pull/4))
+- Protobufs: did not read the full length (See [jaspervdm/pogoprotos-php#5](https://github.com/jaspervdm/pogoprotos-php/issues/5#issuecomment-235719989))
 
 ## Google login
 
