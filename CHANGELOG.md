@@ -4,6 +4,12 @@ All Notable changes to `pokemon-go` will be documented in this file.
 
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
+## 2016-08-01
+
+### Added
+- Now retries the request if "unknown" is returned
+- Max retry limit
+
 ## [v1.0.0-alpha1] - 2016-07-31
 
 ### Added

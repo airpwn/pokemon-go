@@ -29,6 +29,18 @@ abstract class RequestBuilder
     protected static $rpcId;
 
     /**
+     * Determines whether the request uses token or AuthTicket.
+     *
+     * @param RequestEnvelope $request
+     *
+     * @return bool
+     */
+    public static function isInitialRequest(RequestEnvelope $request)
+    {
+        return is_null($request->getAuthTicket());
+    }
+
+    /**
      * Request generation by token and type (Initial).
      *
      * @param string          $accessToken

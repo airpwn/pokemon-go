@@ -24,6 +24,7 @@ use DrDelay\PokemonGo\Request\ApiRequests\GetPlayerRequest;
 use DrDelay\PokemonGo\Request\Endpoint;
 use DrDelay\PokemonGo\Request\RequestBuilder;
 use DrDelay\PokemonGo\Request\RequestException;
+use DrDelay\PokemonGo\Request\RequestNeedsResendException;
 use Fig\Cache\Memory\MemoryPool;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Psr7\StreamWrapper;
@@ -31,6 +32,7 @@ use League\Container\Container;
 use League\Container\Exception\NotFoundException as AliasNotFound;
 use POGOProtos\Data\PlayerData;
 use POGOProtos\Networking\Envelopes\AuthTicket;
+use POGOProtos\Networking\Envelopes\RequestEnvelope;
 use POGOProtos\Networking\Envelopes\ResponseEnvelope;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerAwareInterface;
@@ -53,6 +55,7 @@ class Client implements CacheAwareInterface, ClientAwareInterface, LoggerAwareIn
     const USER_AGENT = 'Niantic App';
     const AUTH_TICKET_CACHE_NAMESPACE = 'AuthTicket';
     const INITIAL_API_URL = 'https://pgorelease.nianticlabs.com/plfe/rpc';
+    const MAX_REQUEST_RETRIES = 2;
 
     const AUTH_ERROR_CODE = 102;
     const HANDSHAKE_CODE = 53;
@@ -303,50 +306,63 @@ class Client implements CacheAwareInterface, ClientAwareInterface, LoggerAwareIn
     }
 
     /**
-     * Sends a request, saves a possibly returned AuthTicket and endpoint.
+     * Builds the RequestEnvelope.
      *
      * @param array $requestTypes An array of \POGOProtos\Networking\Requests\RequestType consts or \POGOProtos\Networking\Requests\Request objects
      *
-     * @return ResponseEnvelope
-     *
-     * @throws AuthException
-     * @throws RequestException
-     *
-     * @see AuthTicket
-     * @see \POGOProtos\Networking\Requests\RequestType
-     * @see \POGOProtos\Networking\Requests\Request
+     * @return RequestEnvelope
      */
-    public function sendRequestRaw(array $requestTypes):ResponseEnvelope
+    protected function createRequestEnvelope(array $requestTypes):RequestEnvelope
     {
         $authTicket = $this->authTicket();
-        $hasAuthTicket = (bool) $authTicket;
-        $requestEnvelope = null;
-        if ($hasAuthTicket) {
+        if ($authTicket) {
             $this->logger->debug('Auth ticket exists');
-            $requestEnvelope = RequestBuilder::getRequest($authTicket, $this->location, $requestTypes);
+
+            return RequestBuilder::getRequest($authTicket, $this->location, $requestTypes);
         } else {
             $this->logger->info('No auth ticket, doing initial request');
-            $requestEnvelope = RequestBuilder::getInitialRequest($this->accessToken, $this->authType, $this->location, $requestTypes);
-        }
 
-        $response = $this->client->post($this->endpoint, ['body' => $requestEnvelope->toProtobuf()]);
-        $responseEnv = new ResponseEnvelope(StreamWrapper::getResource($response->getBody()));
+            return RequestBuilder::getInitialRequest($this->accessToken, $this->authType, $this->location, $requestTypes);
+        }
+    }
+
+    /**
+     * Error/MetaInfo handling, determines resending.
+     *
+     * @param ResponseEnvelope $responseEnv
+     *
+     * @return ResponseEnvelope
+     *
+     * @throws RequestNeedsResendException
+     */
+    protected function processResponseEnvelope(ResponseEnvelope $responseEnv):ResponseEnvelope
+    {
         $responseCode = $responseEnv->getStatusCode();
 
         if ($responseCode == static::AUTH_ERROR_CODE) {
-            if (!$hasAuthTicket) {
-                throw new AuthException('Received AUTH_ERROR_CODE in initial request');
-            }
-
-            $this->logger->warning('Received Auth error, trying to obtain a new AuthTicket');
-            $this->authTicket(null, true);
-
-            return $this->sendRequestRaw($requestTypes);
+            throw new RequestNeedsResendException(RequestNeedsResendException::REASON_AUTH);
         }
 
         if ($responseCode == static::UNKNOWN_CODE) {
-            throw new RequestException('Server responded with "unknown" status code '.static::UNKNOWN_CODE);
+            throw new RequestNeedsResendException(RequestNeedsResendException::REASON_UNKNOWN);
         }
+
+        if ($this->processResponseMeta($responseEnv) || $responseCode == static::HANDSHAKE_CODE) {
+            throw new RequestNeedsResendException(RequestNeedsResendException::REASON_HANDSHAKE);
+        }
+
+        return $responseEnv;
+    }
+
+    /**
+     * Processes possibly returned AuthTicket / API Url.
+     *
+     * @param ResponseEnvelope $responseEnv
+     *
+     * @return bool Whether something has been updated
+     */
+    protected function processResponseMeta(ResponseEnvelope $responseEnv)
+    {
         $resend = false;
 
         $apiUrl = $responseEnv->getApiUrl();
@@ -367,16 +383,56 @@ class Client implements CacheAwareInterface, ClientAwareInterface, LoggerAwareIn
             $resend = true;
         }
 
-        if ($resend || $responseCode == static::HANDSHAKE_CODE) {
-            $this->logger->debug('Resending request');
+        return $resend;
+    }
 
-            return $this->sendRequestRaw($requestTypes);
+    /**
+     * Sends a request, saves a possibly returned AuthTicket and endpoint.
+     *
+     * @param array $requestTypes An array of \POGOProtos\Networking\Requests\RequestType consts or \POGOProtos\Networking\Requests\Request objects
+     * @param int   $retry        Internal, counts the retries
+     *
+     * @return ResponseEnvelope
+     *
+     * @throws AuthException
+     * @throws RequestException
+     *
+     * @see AuthTicket
+     * @see \POGOProtos\Networking\Requests\RequestType
+     * @see \POGOProtos\Networking\Requests\Request
+     */
+    public function sendRequestRaw(array $requestTypes, $retry = 0):ResponseEnvelope
+    {
+        $requestEnvelope = $this->createRequestEnvelope($requestTypes);
+
+        $response = $this->client->post($this->endpoint, ['body' => $requestEnvelope->toProtobuf()]);
+
+        try {
+            return $this->processResponseEnvelope(new ResponseEnvelope(StreamWrapper::getResource($response->getBody())));
+        } catch (RequestNeedsResendException $e) {
+            $this->logger->debug('Request needs resending: Code '.$e->getCode());
+
+            switch ($e->getCode()) {
+                case RequestNeedsResendException::REASON_AUTH:
+                    if (RequestBuilder::isInitialRequest($requestEnvelope)) {
+                        throw new AuthException('Received AUTH_ERROR_CODE in initial request');
+                    }
+                    $this->logger->warning('Received Auth error, trying to obtain a new AuthTicket');
+                    $this->authTicket(null, true);
+                    break;
+                case RequestNeedsResendException::REASON_HANDSHAKE:
+                    $this->logger->info('Received Handshake');
+                    break;
+                case RequestNeedsResendException::REASON_UNKNOWN:
+                    $this->logger->warning('Received "unknown" response code');
+                    break;
+            }
+
+            if ($retry >= static::MAX_REQUEST_RETRIES) {
+                throw new RequestException('Maximum number of retries exceeded', 0, $e);
+            }
+
+            return $this->sendRequestRaw($requestTypes, ++$retry);
         }
-
-        if (!$hasAuthTicket && $responseCode != static::HANDSHAKE_CODE) {
-            throw new RequestException('Did not receive Handshake from server');
-        }
-
-        return $responseEnv;
     }
 }
