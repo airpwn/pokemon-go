@@ -360,10 +360,12 @@ class Client implements CacheAwareInterface, ClientAwareInterface, LoggerAwareIn
      * @param ResponseEnvelope $responseEnv
      *
      * @return bool Whether something has been updated
+     *
+     * @throws RequestException
      */
     protected function processResponseMeta(ResponseEnvelope $responseEnv)
     {
-        $resend = false;
+        $update = false;
 
         $apiUrl = $responseEnv->getApiUrl();
         if ($apiUrl) {
@@ -371,19 +373,34 @@ class Client implements CacheAwareInterface, ClientAwareInterface, LoggerAwareIn
             if ($apiUrl != $this->endpoint) {
                 $this->logger->info('Received new Api URL '.$apiUrl);
                 $this->endpoint = $apiUrl;
-                $resend = true;
+                $update = true;
             }
         }
 
         /** @var AuthTicket|null $authTicket */
         $authTicket = $responseEnv->getAuthTicket();
-        if ($authTicket) {
+        $hasTicket = (bool) $authTicket;
+        if ($hasTicket) {
             $this->logger->info('Received AuthTicket');
-            $this->authTicket($authTicket);
-            $resend = true;
+            $update = true;
         }
 
-        return $resend;
+        if ($update) {
+            $this->logger->debug('Updating Endpoint cache');
+            if (!$hasTicket) {
+                $this->logger->debug('Only API Url has been updated');
+                // authTicket() also loads the Endpoint URL from cache => Save the new one to tmp variable
+                $tmp = $this->endpoint;
+                $authTicket = $this->authTicket();
+                if (!$authTicket) {
+                    throw new RequestException('Received API Url without having an AuthTicket');
+                }
+                $this->endpoint = $tmp;
+            }
+            $this->authTicket($authTicket);
+        }
+
+        return $update;
     }
 
     /**

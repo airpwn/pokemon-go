@@ -10,6 +10,9 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 - Now retries the request if "unknown" is returned
 - Max retry limit
 
+### Fixed
+- Write the Endpoint-URL to cache even no new AuthTicket has been received
+
 ## [v1.0.0-alpha1] - 2016-07-31
 
 ### Added
