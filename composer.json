@@ -22,7 +22,7 @@
         "league/container": "^2.2",
         "guzzlehttp/guzzle": "^6.2",
         "psr/cache": "^1.0",
-        "fig/cache-util": "^1.0@dev",
+        "fig/cache-util": "dev-master#1a50f96959a7834351980def97f986c2472b58c8",
         "jaspervdm/pogoprotos-php": "dev-master#7a5ecbe00dffb534816782131530ad21fefe1a06"
     },
     "require-dev": {
