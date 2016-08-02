@@ -1,4 +1,4 @@
-# pokemon-go - Pokemon Go API PHP Library
+# pokemon-go - Pokémon Go API PHP Library
 
 [![Latest Version on Packagist][ico-version]][link-packagist]
 [![Software License][ico-license]](LICENSE.md)
@@ -7,10 +7,10 @@
 [![Total Downloads][ico-downloads]][link-packagist]
 [![PHP7 Ready](https://img.shields.io/badge/PHP7-ready-green.svg)][link-packagist]
 
-This library aims to provide the tools to communicate with the Pokemon Go API.
+This library aims to provide the tools to communicate with the Pokemon Go API. 
 It is still work in progress.
 
-This package is compliant with [PSR-1], [PSR-2] and [PSR-4]. If you notice compliance oversights,
+This package is compliant with [PSR-1], [PSR-2] and [PSR-4]. If you notice compliance oversights, 
 please send a patch via pull request.
 
 [PSR-1]: https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-1-basic-coding-standard.md
@@ -93,6 +93,13 @@ If you discover any security related issues, please email info@vi0lation.de inst
 ## License
 
 The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+
+## Legal
+
+This project is in no way affiliated with, authorized, maintained, sponsored or endorsed by Niantic, The Pokémon Company, Nintendo or any of its affiliates or subsidiaries. 
+This is an independent and unofficial API library. 
+The contents of this repository are a proof of concept and are for educational use only. 
+Using this project might be against Niantic's TOS. 
 
 [ico-version]: https://img.shields.io/packagist/v/drdelay/pokemon-go.svg?style=flat-square
 [ico-license]: https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square

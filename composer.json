@@ -4,7 +4,8 @@
     "type": "library",
     "keywords": [
         "DrDelay",
-        "pokemon-go"
+        "pokemon-go",
+        "Pokémon"
     ],
     "homepage": "https://github.com/DrDelay/pokemon-go",
     "license": "MIT",
@@ -15,14 +16,15 @@
             "role": "Developer"
         }
     ],
-    "minimum-stability": "stable",
+    "minimum-stability": "dev",
+    "prefer-stable": true,
     "require": {
         "php": "^7.0",
         "psr/log": "^1.0",
         "league/container": "^2.2",
         "guzzlehttp/guzzle": "^6.2",
         "psr/cache": "^1.0",
-        "fig/cache-util": "dev-master#1a50f96959a7834351980def97f986c2472b58c8",
+        "fig/cache-util": "^1.0",
         "jaspervdm/pogoprotos-php": "dev-master#7a5ecbe00dffb534816782131530ad21fefe1a06"
     },
     "require-dev": {
@@ -31,7 +33,7 @@
     },
     "autoload": {
         "psr-4": {
-            "DrDelay\\PokemonGo\\": "src/"
+            "DrDelay\\PokemonGo\\": "src"
         }
     },
     "autoload-dev": {
